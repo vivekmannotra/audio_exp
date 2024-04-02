@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html>
+<head>
+ 	<meta charset="UTF-8">
+    	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Audio Experiment</title>
+<style>
+	body {
+		font-family: sans-serif;
+		margin: 0;
+	}
+	main {
+		margin: 5vh 5vw;
+	}
+	section {
+		display: block;
+	}
+        .piano {
+            display: flex;
+            flex-wrap: wrap;
+            width: auto;
+            height: 100px;
+            position: relative;
+        }
+        .key {
+            box-sizing: border-box;
+            border: 1px solid #000;
+            height: 100%;
+		cursor: pointer;
+            position: relative;
+		transition: transform 0.2s ease;
+            z-index: 1;
+        }
+	
+	.key-tag {
+		position: absolute;
+		bottom: 0;	
+		font-size: 8px;
+	}
+   	.drums {
+    		display: flex;
+	flex-wrap: wrap;
+
+    	padding: 20px;
+	}
+.drum {
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(#ccc, #333);;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+		transition: transform 0.2s ease;
+    margin: 5px;
+}
+.strings {
+    display: flex;
+    flex-direction: column;
+	padding: 20px;
+    justify-content: space-between;
+	width: 100%;
+}
+
+.string {
+    flex-grow: 1;
+    cursor: pointer;
+	height: 30px;
+		transition: transform 0.2s ease;
+    margin: 0 2px; /* Adjust spacing between strings */
+}
+
+.active {
+		transform: rotateX(-20deg) translateZ(-15px);
+	}
+
+canvas {
+	height: 200px;
+	width: 100%;
+	border: 1px solid #000;
+}
+.canvas-parent {
+	display: inline-block;
+	width: 49%;
+}
+footer {
+	margin-top: 5vh;
+	padding: 5vh 5vw;
+}
+header {
+	margin-bottom: 5vh;
+	padding: 5vh 5vw;
+}
+button {
+	padding: 1vw;
+	background: none;
+}
+#slider-container {
+	display: flex;
+	padding: 1em;
+	border: 1px solid #000;
+	align-items: center;
+	gap: 0.5em;
+	flex-wrap: wrap;
+}
+#glCanvas {
+            height: 80vh;
+            width: 80vw;
+        }
+
+</style>
+</head>
+<body>
+    <header><h1>Audio Experiment</h1></header>
+    <main>
+	<section>
+		<h2>Monitors</h2>
+		<p>
+			<button onclick="toggleSection('spectra', this)">Frequency Spectrum</button>
+			<button onclick="toggleSection('wave', this)">WaveForm</button>
+			<button onclick="toggleSection('gl_viz', this)">3d Viz</button>
+			<button onclick="toggleSection('file_player', this)">Files</button>
+		</p>
+	</section>
+	<section id="spectra">
+		<div class="canvas-parent"><canvas id="left_f_visualizer"></canvas><p>Left Frequencies</p></div>
+		<div class="canvas-parent"><canvas id="right_f_visualizer"></canvas><p>Right Frequencies</p></div>
+	</section>
+	<section id="wave">
+		<div class="canvas-parent"><canvas id="left_w_visualizer"></canvas><p>Left Wave</p></div>
+		<div class="canvas-parent"><canvas id="right_w_visualizer"></canvas><p>Right Wave</p></div>
+	</section>
+	<section id="gl_viz">
+		<canvas id="glCanvas"></canvas>
+	</section>
+	<section id="file_player">
+		<h2>Audio Player</h2>
+		<div id="progressContainer" style="width: 100%; background-color: #ddd;">
+    			<div id="progressBar" style="width: 0%;padding: 10px;"></div>
+		</div>
+		<label><input type="checkbox" id="analyse_file"> <small>Analyse</small></label>
+		<input type="file" id="audioInput" accept="audio/*">
+	</section>
+	<section>
+		<h2>Instruments</h2>
+		<p>
+		<button onclick="toggleSection('keys', this)">Piano</button>
+		<button onclick="toggleSection('percuss', this)">Drums</button>
+		<button onclick="toggleSection('str', this)">Strings</button>
+		<button onclick="toggleSection('tape', this)">Tape</button>
+		</p>
+	</section>
+	<section id="keys">
+		<div id="piano" class="piano"></div>
+		<p>
+		<input type="text" id="piano_real" placeholder="Piano Real">
+		<input type="text" id="piano_imag" placeholder="Piano Imaginary">
+		<input type="text" id="piano_adsr" placeholder="Piano ADSR">
+		</p>
+	</section>
+	<section id="percuss" style="display: flex;">
+		<div id="drums" class="drums"></div>
+	</section>
+	<section id="str" style="display: flex;">
+		<div id="strings" class="strings"></div>
+	</section>
+        <section id="tape">
+				<h2>Tape</h2>
+            <textarea id="inp_a" rows="10" style="width: 90%;margin: 0 auto;"></textarea><br>
+            	<div id="controls">
+			<button id="btn_a">Play</button>
+			<button id="btn_b">Pause</button>
+			<button id="btn_c">Stop</button>
+			<button id="btn_d">Record</button>
+			<button id="btn_e">Clear</button>
+		</div>
+		<div id="info"></div>
+      
+	<h2>Tape Maker</h2>
+		<div id="slider-container">
+<h3>Left Channel</h3>
+  <p>Frequency (0-22000):</p>
+  <input type="number" id="left-freq" min="0" max="22000" value="0">
+  <p>FFT Real:</p>
+  <div>
+    <input type="text" id="left-fft-real">
+  </div>
+<p>FFT Imaginary:</p>
+  <div>
+    <input type="text" id="left-fft-imag">
+  </div>
+<p>ADSR:</p>
+  <div>
+    <input type="text" id="left-adsr">
+  </div>
+</div>
+		<div id="slider-container">
+<h3>Right Channel</h3>
+  <p>Frequency (0-22000):</p>
+  <input type="number" id="right-freq" min="0" max="22000" value="0">
+  <p>FFT Real:</p>
+  <div>
+    <input type="text" id="right-fft-real">
+  </div>
+<p>FFT Imaginary:</p>
+  <div>
+    <input type="text" id="right-fft-imag">
+  </div>
+<p>ADSR:</p>
+  <div>
+    <input type="text" id="right-adsr">
+  </div>
+</div>
+<p>
+	<button id="add_tape">Add</button>
+</p>
+	</section>
+    </main>
+    <footer>
+        <p><small>This is a confidential experiment.<small></p>
+    </footer>
+<script type="module">
+import SoundViz from './3d_viz.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+   window.gl_viz = new SoundViz('glCanvas');
+
+});
+</script>
+
+    <script>
+
+	const notes = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00];
+	const drums = [64, 95, 112, 140, 170];
+	const d_def = [[0, 1, 0.5, 0.25], [0, 0.1, 0.05, 0.025], [1100, 0.2, 0, 0.1]];
+	const strings = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534];
+	const s_def = [[0, 0.4, 0.3, 0.25], [0, 0, 0, 0 ], [1100, 0.2, 0.5, 0.1]];
+        const makeADSR = (type, def, index) => {
+		const vals = JSON.parse(JSON.stringify(def));
+		const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
+		if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+		if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+		console.log(vals[2])
+		return vals
+	}
+	const soundDefinitions = {
+            'example_sound':  notes.map(n => {  return [[n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]], [n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]] ] }),
+		'drumSounds': drums.map((d, i) => { return [ `f${d}`, [[d].concat(makeADSR('drum', d_def,i)),[d].concat(makeADSR('drum', d_def,i))]] }),
+		'stringSounds': strings.map((s, i) => { return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]] })
+        };
+
+const left_fviz = document.getElementById('left_f_visualizer');
+const right_fviz = document.getElementById('right_f_visualizer');
+const left_wviz = document.getElementById('left_w_visualizer');
+const right_wviz = document.getElementById('right_w_visualizer');
+
+
+function toggleSection (id, controller) {
+    let target = document.querySelector("#" + id);
+    if (target.style.display == 'block') {
+        target.style.display = 'none';
+        controller.classList.remove('glow');
+    } else {
+        target.style.display = 'block';
+        controller.classList.add('glow');
+    }
+}
+
+function getRandomRgbColor() {
+  // Generate random values for red, green, and blue components (0-255)
+  const red = Math.floor(Math.random() * 256);
+  const green = Math.floor(Math.random() * 256);
+  const blue = Math.floor(Math.random() * 256);
+const opac = Math.random();
+
+  // Construct the RGB string
+  const color = `rgb(${red}, ${green}, ${blue}, ${opac})`;
+
+  return color;
+}
+
+function setRandomGlowBoxShadow() {
+  const randomColor = getRandomRgbColor();
+window.currentTheme = randomColor;
+  const cssRule = `.glow {
+    -webkit-box-shadow: 0px 0px 12px 8px ${randomColor};
+    -moz-box-shadow: 0px 0px 12px 8px ${randomColor};
+    box-shadow: 0px 0px 12px 8px ${randomColor};
+	background: ${randomColor};
+  }`;
+const cssRule2 = `footer, header { background: ${randomColor};}`;
+  const styleElement = document.createElement("style");
+  styleElement.appendChild(document.createTextNode(cssRule));
+  styleElement.appendChild(document.createTextNode(cssRule2));
+  document.head.appendChild(styleElement);
+}
+
+setRandomGlowBoxShadow();
+
+class FFT {
+    constructor() {
+       
+    }
+
+   // Preprocess input to ensure it's suitable for FFT
+    preprocessInput(input) {
+        const validInput = input.map(value => ({
+            re: typeof value.re === "number" && !isNaN(value.re) ? value.re : 0,
+            im: typeof value.im === "number" && !isNaN(value.im) ? value.im : 0
+        }));
+
+        const adjustedSize = this.adjustToPowerOfTwo(validInput.length);
+        return validInput.slice(0, adjustedSize).concat(
+            new Array(adjustedSize - validInput.length).fill({re: 0, im: 0})
+        );
+    }
+
+    // Main FFT function with preprocessing
+    transform(input) {
+        if (!input || !Array.isArray(input)) {
+            throw new Error("Invalid input for FFT transform.");
+        }
+        
+        // Preprocess input to replace non-numeric values with 0 and adjust to nearest power of two
+        const preprocessedInput = this.preprocessInput(input);
+        return this.fft(preprocessedInput, false);
+    }
+
+    // Inverse FFT function with data preprocessing
+    inverseTransform(input) {
+        if (!input || !Array.isArray(input) || input.length !== this.size) {
+            throw new Error("Invalid input for FFT inverse transform.");
+        }
+        const processedInput = this.preprocessData(input);
+        return this.fft(processedInput, true);
+    }
+
+    // Internal FFT algorithm (recursive Cooley-Tukey)
+    fft(input, inverse) {
+        const N = input.length;
+        if (N <= 1) return input;
+
+        // Filter inputs for even and odd indices, adding null checks
+        const even = this.fft(input.filter((_, i) => i % 2 === 0), inverse);
+        const odd = this.fft(input.filter((_, i) => i % 2 !== 0), inverse);
+        const combined = new Array(N).fill(null).map(() => ({re: 0, im: 0}));
+
+        for (let k = 0; k < N / 2; k++) {
+            const angle = 2 * Math.PI * k / N * (inverse ? 1 : -1);
+            const exp = { re: Math.cos(angle), im: Math.sin(angle) };
+            const term = this.multiplyComplex(odd[k], exp);
+            combined[k] = this.addComplex(even[k], term);
+            combined[k + N / 2] = this.subtractComplex(even[k], term);
+        }
+
+        // Normalize the inverse transform
+        if (inverse) {
+            return combined.map(c => ({ re: c.re / N, im: c.im / N }));
+        }
+
+        return combined;
+    }
+
+	// Adjust the array size to the nearest power of two
+    adjustToPowerOfTwo(size) {
+        return Math.pow(2, Math.ceil(Math.log2(size)));
+    }
+
+    // Complex number arithmetic functions
+    addComplex(a, b) {
+        return { re: a.re + b.re, im: a.im + b.im };
+    }
+
+    subtractComplex(a, b) {
+        return { re: a.re - b.re, im: a.im - b.im };
+    }
+
+    multiplyComplex(a, b) {
+        return { re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re };
+    }
+
+    // Utility function to check if a number is a power of two
+    isPowerOfTwo(n) {
+        return n && (n & (n - 1)) === 0;
+    }
+}
+
+
+class SoundEngine {
+    constructor() {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+	this.nextStartTime = this.audioContext.currentTime;
+	this.oscillators = [];
+	this.recording = false;
+        this.startTime = 0;
+        this.recordedData = [];
+        this.isPlaying = false; 
+    }
+
+    playSoundFromArray(soundData) {
+	if (!this.isPlaying) {	
+            this.isPlaying = true;
+        }
+        let startTime = this.audioContext.currentTime;
+
+        soundData.forEach(([leftData, rightData]) => {
+            this.playChannel(leftData, startTime, -1); 
+            this.playChannel(rightData, startTime, 1);  
+		startTime  += Math.max(leftData[3][3], rightData[3][3]) + 0.5;
+        });
+	if (this.recording) {
+		soundData.forEach(sd => { this.recordedData.push(sd) });
+		this.startTime += startTime;
+	}
+    }
+
+    playChannel(channelData, startTime, panValue) {
+        const [frequency, real, imag, adsr] = channelData;
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        const panner = this.audioContext.createStereoPanner();
+	const analyser = this.audioContext.createAnalyser();
+	analyser.fftSize = 1024;
+    	const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    	const dataArrayW = new Uint8Array(analyser.fftSize);
+
+        // Create and set the custom waveform
+        const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
+        oscillator.setPeriodicWave(periodicWave);
+        oscillator.frequency.value = frequency;	
+
+        // Apply ADSR envelope
+        this.applyADSR(gainNode, adsr, startTime, oscillator);
+
+        // Set panner value for stereo effect
+        panner.pan.setValueAtTime(panValue, startTime);
+
+        // Connect and play
+        oscillator.connect(gainNode);
+	gainNode.connect(analyser);
+	analyser.connect(panner);
+        panner.connect(this.audioContext.destination);
+
+	const canvasContext = panValue >= 0 ? setupCanvas(right_fviz) : setupCanvas(left_fviz);
+	const canvasContextW = panValue >= 0 ? setupCanvas(right_wviz) : setupCanvas(left_wviz);
+	this.oscillators.push(oscillator); 
+        oscillator.start(startTime);
+	let frameCount = 400;
+	let frameCountW = 400;
+	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
+	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
+		window.gl_viz.startVisualizationLoop(analyser, 100);
+        oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
+	
+	
+    }
+
+    applyADSR(gainNode, adsr, startTime, oscillator) {
+        const [attack, decay, sustain, release] = adsr;
+        const sustainLevel = sustain;
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(1, startTime + attack);
+        gainNode.gain.linearRampToValueAtTime(sustainLevel, startTime + attack + decay);
+
+    }
+	
+    pause() {
+        if (this.isPlaying) {
+            this.audioContext.suspend();
+            this.isPlaying = false;
+        }
+    }
+
+    stop() {
+        if (this.isPlaying) {
+            this.oscillators.forEach(oscillator => oscillator.stop());
+            this.oscillators = [];
+            this.audioContext.close();
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.isPlaying = false;
+        }
+    }
+
+    record() {
+        this.recording = !this.recording;
+    }
+
+}
+
+function setupCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr); // Scale all drawing operations by the dpr, making them crisp
+    
+    ctx.font = '8px Arial'; // Adjust font size as needed
+    ctx.textAlign = 'left'; // Reset or set text alignment as needed
+    ctx.textBaseline = 'middle'; // Adjust baseline as needed
+    
+    return ctx; // In case you need to work with context directly afterward
+}
+
+function drawFrequency(canvas, canvasContext, analyser, dataArray, frameCount) {
+	if (canvasContext && frameCount) {
+
+	    	analyser.getByteFrequencyData(dataArray);
+
+	drawAxesWithLabels(canvas, canvasContext, analyser);
+    
+const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    const padding = 20; // Ensure this matches with drawAxesAndLabels
+    const barWidth = (width - 2 * padding) / dataArray.length;
+    const nyquistFrequency = analyser.context.sampleRate / 2;
+
+    canvasContext.clearRect(padding, padding, width - 2 * padding, height - 2 * padding); // Clear only the chart area
+
+    for (let i = 0; i < dataArray.length; i++) {
+        const value = dataArray[i];
+        const barHeight = (value / 255.0) * (height - 2 * padding); // Scale bar height to canvas size and padding
+        const x = padding + i * barWidth;
+        const y = height - padding - barHeight; // Start drawing bars up from the bottom padding
+
+        canvasContext.fillStyle = window.currentTheme;
+        canvasContext.fillRect(x, y, barWidth, barHeight);
+    }
+	frameCount--;
+	requestAnimationFrame(() => drawFrequency(canvas, canvasContext, analyser, dataArray, frameCount));
+	
+
+	}
+
+}
+
+
+function drawWaveform(canvas, canvasContext, analyser, dataArray, frameCount) {
+	if (canvasContext && frameCount) {
+
+    	analyser.getByteTimeDomainData(dataArray);
+
+	drawWaveformAxes(canvas, canvasContext, analyser);
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    const padding = 20; // Padding around the canvas
+
+    const segmentWidth = (width - 2 * padding) / dataArray.length;
+        
+        canvasContext.clearRect(padding, padding, width - 2 * padding, height - 2 * padding); // Clear the chart area
+
+        canvasContext.beginPath();
+        canvasContext.strokeStyle = window.currentTheme;
+        for (let i = 0; i < dataArray.length; i++) {
+            const value = dataArray[i];
+            const x = padding + i * segmentWidth;
+            const y = ((value / 255.0) * (height - 2 * padding)) + padding;
+
+            if (i === 0) {
+                canvasContext.moveTo(x, y);
+            } else {
+                canvasContext.lineTo(x, y);
+            }
+        }
+        canvasContext.stroke();
+	frameCount--;
+	requestAnimationFrame(() => drawWaveform(canvas, canvasContext, analyser, dataArray, frameCount));
+	
+
+	}
+}
+
+
+function drawAxesWithLabels(canvas, canvasContext, analyser) {
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    const padding = 20; // Space for labels
+
+    // Clear canvas and prepare for drawing axes
+    canvasContext.clearRect(0, 0, width, height);
+
+    // Draw X-axis at the bottom
+    canvasContext.beginPath();
+    canvasContext.moveTo(padding, height - padding);
+    canvasContext.lineTo(width - padding, height - padding);
+    canvasContext.stroke();
+
+    // Draw Y-axis on the left
+    canvasContext.beginPath();
+    canvasContext.moveTo(padding, height - padding);
+    canvasContext.lineTo(padding, padding);
+    canvasContext.stroke();
+
+    // Frequency labels for X-axis
+    const freqLabelsCount = 10; // Adjust based on preference
+    const nyquistFrequency = analyser.context.sampleRate / 2;
+    for (let i = 0; i <= freqLabelsCount; i++) {
+        const x = padding + (i / freqLabelsCount) * (width - 2 * padding);
+        const frequency = (i / freqLabelsCount) * nyquistFrequency;
+        // Draw tick
+        canvasContext.beginPath();
+        canvasContext.moveTo(x, height - padding);
+        canvasContext.lineTo(x, height - padding + 5);
+        canvasContext.stroke();
+        // Draw label
+        canvasContext.fillText(`${Math.round(frequency)}Hz`, x, height - 5);
+    }
+
+    // Amplitude labels for Y-axis
+    const ampLabelsCount = 5; // Adjust based on preference
+    for (let i = 0; i <= ampLabelsCount; i++) {
+        const y = height - padding - (i / ampLabelsCount) * (height - 2 * padding);
+        // Draw tick
+        canvasContext.beginPath();
+        canvasContext.moveTo(padding, y);
+        canvasContext.lineTo(padding - 5, y);
+        canvasContext.stroke();
+        // Draw label
+        canvasContext.fillText(`${i * 20}%`, 0, y); // Example: amplitude as a percentage
+    }
+
+    canvasContext.textAlign = 'center'; // Reset text alignment for general use
+
+}
+
+
+function drawWaveformAxes(canvas, canvasContext) {
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+    const padding = 20; // Space for labels
+
+    // Clear canvas and prepare for drawing axes
+    canvasContext.clearRect(0, 0, width, height);
+
+    // Draw X-axis at the bottom
+    canvasContext.beginPath();
+    canvasContext.moveTo(padding, height - padding);
+    canvasContext.lineTo(width - padding, height - padding);
+    canvasContext.stroke();
+
+    // Draw Y-axis on the left
+    canvasContext.beginPath();
+    canvasContext.moveTo(padding, height - padding);
+    canvasContext.lineTo(padding, padding);
+    canvasContext.stroke();
+
+    // Time labels for X-axis (assuming total duration is accessible)
+    const timeLabelsCount = 10; // Adjust based on preference
+    const totalDuration = 1; // Placeholder, replace with actual duration in seconds
+    for (let i = 0; i <= timeLabelsCount; i++) {
+        const x = padding + (i / timeLabelsCount) * (width - 2 * padding);
+        const time = (i / timeLabelsCount) * totalDuration;
+        // Draw tick
+        canvasContext.beginPath();
+        canvasContext.moveTo(x, height - padding);
+        canvasContext.lineTo(x, height - padding + 5);
+        canvasContext.stroke();
+        // Draw label
+        canvasContext.fillText(`${time.toFixed(2)}s`, x, height - 5);
+    }
+
+    // Amplitude labels for Y-axis
+    const ampLabelsCount = 5; // Adjust based on preference
+    for (let i = 0; i <= ampLabelsCount; i++) {
+        const amplitude = -1 + (i / ampLabelsCount) * 2; // Normalize between -1 and 1
+        const y = height - padding - (i / ampLabelsCount) * (height - 2 * padding);
+        // Draw tick
+        canvasContext.beginPath();
+        canvasContext.moveTo(padding, y);
+        canvasContext.lineTo(padding - 5, y);
+        canvasContext.stroke();
+        // Considering amplitude is normalized, label accordingly
+        canvasContext.fillText(`${amplitude.toFixed(1)}`, 0, y);
+    }
+
+    canvasContext.textAlign = 'center'; // Reset text alignment for general use
+}
+
+
+
+        const soundEngine = new SoundEngine();
+
+        document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
+
+        function playSoundA() {
+            try {
+		let input = document.querySelector("#inp_a").value;
+		console.log(input);
+                const dataArray = JSON.parse(input);
+                soundEngine.playSoundFromArray(dataArray)
+                document.querySelector("#info").innerHTML = '';
+            } catch (e) {
+                document.querySelector("#info").innerHTML = `Error: ${e}`;
+            }
+        }
+
+        document.querySelector("#btn_a").addEventListener("click", playSoundA);
+        document.querySelector("#btn_b").addEventListener("click", () => { soundEngine.pause() });
+        document.querySelector("#btn_c").addEventListener("click", () => { 
+		soundEngine.stop();
+		document.querySelector("#inp_a").value = JSON.stringify(soundEngine.recordedData);
+	});
+        document.querySelector("#btn_d").addEventListener("click", () => { soundEngine.record() });
+        document.querySelector("#btn_e").addEventListener("click", () => { 
+		document.querySelector("#inp_a").value = ''; 
+		document.querySelector("#info").innerHTML = '';
+	});
+	window.addEventListener("load", function () {
+
+function calculateFrequency(noteIndex) {
+
+    const A4_KEY_INDEX = 48;
+    const A4_FREQUENCY = 440;
+    return Math.pow(2, (noteIndex - A4_KEY_INDEX) / 12) * A4_FREQUENCY;
+}
+
+function playNote(noteIndex, key) {
+
+    const frequency = calculateFrequency(noteIndex);
+
+	const fundamentalFrequency = frequency;
+	if (window.refSound) {
+	const fftSize = window.refSound.fftResult.length;
+const harmonics = calculateHarmonics(fundamentalFrequency, 12); 
+const sampleRate = window.refSound.sampleRate;
+const harmonicData = harmonics.map(harmonicFreq => 
+    getMagnitudeAndPhaseFromFFT(window.refSound.fftResult, harmonicFreq, fftSize, sampleRate)
+).filter(data => data); 
+
+console.log(harmonicData);
+document.querySelector("#piano_real").value = JSON.stringify(harmonicData.map(hd => hd.coefs.re));
+document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd => hd.coefs.im));
+}
+
+    const imaginary = document.querySelector("#piano_imag").value ? JSON.parse(document.querySelector("#piano_imag").value) : [0,0.5,0.5, 0.5, 0];
+    const ADSR = document.querySelector("#piano_adsr").value ? JSON.parse(document.querySelector("#piano_adsr").value) : [0, 0.9, 0, 0.9];
+    const note = document.querySelector("#piano_real").value ? JSON.parse(document.querySelector("#piano_real").value) : [0, 1, 0.4, 0.2, 0.1];
+
+    
+    const soundData = [
+        [frequency , note, imaginary, ADSR], 
+        [frequency , note, imaginary, ADSR]  
+    ];
+
+    soundEngine.playSoundFromArray([soundData]);
+
+}
+function playDrumSound(soundName) {
+    const soundParams = soundDefinitions.drumSounds.find(ds => ds[0] == soundName);
+    if (!soundParams) return;
+	soundEngine.playSoundFromArray([soundParams[1]]);
+}
+
+function playStringSound(soundName) {
+    const soundParams = soundDefinitions.stringSounds.find(ss => ss[0] == soundName)
+    if (!soundParams) return;
+	soundEngine.playSoundFromArray([soundParams[1]]);
+
+}
+
+function makePiano (keys=88) {
+
+	const piano = document.getElementById('piano');
+const baseKeyWidth = 20;
+
+	const size = (window.innerWidth/baseKeyWidth)*(7/5);
+	if (size < keys) keys = size;
+
+const whiteKeyWidth = baseKeyWidth + 'px';
+const blackKeyWidth = Math.floor(baseKeyWidth * 0.6) + 'px';
+const whiteKeyHeight = '100px'; // Fixed height for white keys
+const blackKeyHeight = '60px'; // Black keys are 60% of the height of white keys
+
+const notes = [ 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+let octave = 0;
+const marker = Math.floor(keys/2);
+for (let i = (44 - marker); i < (44 + marker); i++) {
+    const noteIndex = i % 12;
+    const note = notes[noteIndex] + octave;
+    const isBlack = note.includes('#');
+    
+    if (noteIndex === 0 && i !== 0) {
+        octave++;
+    }
+
+    const keyDiv = document.createElement('div');
+    keyDiv.className = 'key ' + (isBlack ? 'black-key' : 'white-key');
+    keyDiv.setAttribute('data-sound', i);
+    keyDiv.style = `background-color: ${isBlack ? '#000' : '#fff'}; width: ${isBlack ? blackKeyWidth : whiteKeyWidth}; height: ${isBlack ? blackKeyHeight : whiteKeyHeight}; position: ${isBlack ? 'absolute' : 'relative'}; border: 1px solid #000;`;
+
+    if (isBlack) {
+        const lastWhiteKey = piano.querySelectorAll('.white-key:last-of-type')[0];
+        const offset = baseKeyWidth * 0.7;
+        keyDiv.style.left = `${lastWhiteKey.offsetLeft + offset}px`;
+        keyDiv.style.zIndex = '2';
+    } else {
+	keyDiv.innerHTML = `<span class="key-tag">${i+1}</span>`;
+        piano.appendChild(keyDiv);
+    }
+
+    keyDiv.addEventListener('click', function(event) {
+		event.target.classList.add("active");
+
+   	 playNote(i, event.target);
+		event.target.classList.remove("active");
+	});
+
+    if (isBlack) {
+       
+        piano.appendChild(keyDiv);
+    }
+}
+}
+
+function makeDrums () {
+	const drumsContainer = document.getElementById('drums');
+
+soundDefinitions.drumSounds.forEach(ds => {
+    const drumDiv = document.createElement('div');
+    drumDiv.className = 'drum';
+    drumDiv.setAttribute('data-sound', ds[0]);
+    drumDiv.textContent = ds[0];
+    drumsContainer.appendChild(drumDiv);
+});
+}
+
+function makeStrings() {
+	const stringsContainer = document.getElementById('strings');
+
+soundDefinitions.stringSounds.forEach((ss, index) => {
+    const stringDiv = document.createElement('div');
+	stringDiv.className = 'string';
+	stringDiv.setAttribute('data-sound', ss[0]);
+	stringDiv.style["border-bottom"] = `${5 - (index/2)}px solid #000`;
+	stringsContainer.appendChild(stringDiv);
+});
+}
+
+makePiano();
+makeDrums();
+makeStrings();
+
+
+function setupPointerEventsForInstrument(selector, playSoundFunction) {
+    let isPointerDown = false;
+
+    document.querySelectorAll(selector).forEach(element => {
+        element.addEventListener('pointerdown', event => {
+            isPointerDown = true;
+            playSoundFunction(element.getAttribute('data-sound'), true);
+		element.classList.toggle("active");
+
+        });
+
+        element.addEventListener('pointerenter', () => {
+            if (isPointerDown) {
+                playSoundFunction(element.getAttribute('data-sound'), true); 
+		element.classList.toggle("active");
+
+            }
+        });
+
+        ['pointerup', 'pointercancel'].forEach(type => {
+            element.addEventListener(type, () => {
+                isPointerDown = false;
+                playSoundFunction(element.getAttribute('data-sound'), false); 
+		element.classList.remove("active");
+
+            });
+        });
+    });
+}
+setupPointerEventsForInstrument('.drum', playDrumSound);
+setupPointerEventsForInstrument('.string', playStringSound);
+setupPointerEventsForInstrument('.key', playNote);
+
+function addToTape() {
+	let existing = document.querySelector("#inp_a").value;
+
+  const leftFreq = document.getElementById("left-freq");
+  const leftFFTReal = document.getElementById("left-fft-real");
+  const leftFFTImag = document.getElementById("left-fft-imag");
+  const leftADSR = document.getElementById("left-adsr");
+
+  const rightFreq = document.getElementById("right-freq");
+  const rightFFTReal = document.getElementById("right-fft-real");
+  const rightFFTImag = document.getElementById("right-fft-imag");
+  const rightADSR = document.getElementById("right-adsr");
+
+	let lftChnl, rgtChnl = [];
+	if (leftFreq.value) {
+		lftChnl = JSON.parse(`[${leftFreq.value}, [${leftFFTReal.value}], [${leftFFTImag.value}], [${leftADSR.value}]]`);
+	}
+		if (rightFreq.value) {
+		rgtChnl = JSON.parse(`[${rightFreq.value}, [${rightFFTReal.value}], [${rightFFTImag.value}], [${rightADSR.value}]]`);
+	}
+	let tape = [];
+	tape.push(lftChnl);
+	tape.push(rgtChnl);
+
+	if (existing) {
+		existing = JSON.parse(existing);
+		existing.push(tape);
+		document.querySelector("#inp_a").value = JSON.stringify(existing);
+	} else {
+		document.querySelector("#inp_a").value = JSON.stringify([tape]);
+	}
+	
+
+}
+document.querySelector("#add_tape").addEventListener('click', addToTape)
+const progressBar = document.getElementById('progressBar');
+
+function updateProgressBar(audioSource, audioCtx) {
+    if (audioSource.buffer) {
+        const duration = audioSource.buffer.duration;
+        const currentTime = audioCtx.currentTime - audioSource.startTime;
+        const progressPercentage = (currentTime / duration) * 100;
+	progressBar.style.width = progressPercentage + "%";
+	progressBar.style['background-color'] = window.currentTheme;
+	progressBar.innerHTML = `<p><strong>${currentTime.toFixed(2)}/${duration.toFixed(2)}</strong></p>`        
+        if (currentTime <= duration) {
+            requestAnimationFrame(() => updateProgressBar(audioSource, audioCtx));
+        }
+    }
+}
+
+const audioFileCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+document.getElementById('audioInput').addEventListener('change', function(event) {
+    const file = event.target.files[0]; // Get the first file selected by the user
+    if (!file) {
+        console.log("No file selected!");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(fileLoadEvent) {
+        const arrayBuffer = fileLoadEvent.target.result;
+
+	audioFileCtx.decodeAudioData(arrayBuffer, function(audioBuffer) {
+          	window.audioBuffer = audioBuffer;
+		const sampleRate = audioBuffer.sampleRate;
+		 const analyserLeft = audioFileCtx.createAnalyser();
+	    const analyserRight = audioFileCtx.createAnalyser();
+		const splitter = audioFileCtx.createChannelSplitter(2); 
+		const source = audioFileCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(splitter);
+		splitter.connect(analyserLeft, 0, 0);
+	    splitter.connect(analyserRight, 1, 0); 
+
+            analyserLeft.connect(audioFileCtx.destination); 
+            analyserRight.connect(audioFileCtx.destination); 
+            source.start();
+
+           analyserLeft.fftSize = 2048;
+    	analyserRight.fftSize = 2048;
+    	const bufferLengthLeft = analyserLeft.frequencyBinCount;
+    	const bufferLengthRight = analyserRight.frequencyBinCount;
+    	const dataArrayLeft = new Uint8Array(bufferLengthLeft);
+    	const dataArrayRight = new Uint8Array(bufferLengthRight);
+    	const dataArrayWLeft = new Uint8Array(analyserLeft.fftSize);
+    	const dataArrayWRight = new Uint8Array(analyserRight.fftSize);
+
+    	analyserLeft.getByteFrequencyData(dataArrayLeft);
+    	analyserRight.getByteFrequencyData(dataArrayRight);
+    	analyserLeft.getByteTimeDomainData(dataArrayWLeft);
+    	analyserRight.getByteTimeDomainData(dataArrayWRight);
+	
+    	
+		const canvasContextL = setupCanvas(left_fviz);
+		const canvasContextR = setupCanvas(right_fviz);
+		const canvasContextWL = setupCanvas(left_wviz);
+		const canvasContextWR = setupCanvas(right_wviz);
+
+		let frameCount = audioBuffer.length;
+		let frameCountW = audioBuffer.length;
+		drawFrequency(left_fviz, canvasContextL, analyserLeft, dataArrayLeft, frameCount);
+		drawFrequency(right_fviz, canvasContextR, analyserRight, dataArrayRight, frameCount);
+		drawWaveform(left_wviz, canvasContextWL, analyserLeft, dataArrayWLeft, frameCountW);
+		drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
+		updateProgressBar(source, audioFileCtx);
+
+	if (document.querySelector("#analyse_file").value) {
+		analyseSound(audioBuffer, sampleRate);
+	}
+	
+            
+        }, function(e){ console.log("Error with decoding audio data" + e.err); });
+    };
+
+    reader.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
+});
+
+
+
+	});
+function analyseSound (audioBuffer, sampleRate) {
+	const audioData = audioBuffer.getChannelData(0); 
+const complexData = Array.from(audioData).map(re => ({ re, im: 0 }));
+const fft = new FFT();
+const fftResult = fft.transform(complexData);
+const magnitudes = fftResult.map(c => Math.sqrt(c.re ** 2 + c.im ** 2));
+const phases = fftResult.map(c => Math.atan2(c.im, c.re));
+window.refSound = {
+	fftResult,
+	sampleRate	
+}
+
+}
+function calculateHarmonics(frequency, numHarmonics) {
+    let harmonics = [];
+    
+    // Calculate harmonics up
+    for (let n = 1; n <= numHarmonics; n++) {
+        harmonics.push(frequency * n);
+    }
+    
+    // Calculate octaves down (excluding the fundamental frequency itself)
+    for (let n = 1; n <= numHarmonics; n++) {
+        let octaveDown = frequency / Math.pow(2, n);
+        if (octaveDown >= 20) { // Assuming 20 Hz as the lower threshold for human hearing
+            harmonics.unshift(octaveDown); // Add to the beginning of the array
+        }
+    }
+
+    return harmonics;
+}
+function frequencyToIndex(frequency, fftSize, sampleRate) {
+    return Math.round(frequency * fftSize / sampleRate);
+}
+
+function getMagnitudeAndPhaseFromFFT(fftResult, frequency, fftSize, sampleRate) {
+    const index = frequencyToIndex(frequency, fftSize, sampleRate);
+    const bin = fftResult[index];
+
+    if (!bin) return null; // Check if the bin exists
+
+    const magnitude = Math.sqrt(bin.re ** 2 + bin.im ** 2);
+    const phase = Math.atan2(bin.im, bin.re);
+const coefs = {re: bin.re, im:bin.im};
+    return { frequency, magnitude, phase, coefs };
+}
+
+
+	
+    </script>
+</body>
+</html>
+
