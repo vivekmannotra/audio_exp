@@ -68,6 +68,8 @@
 	height: 30px;
 		transition: transform 0.2s ease;
     margin: 0 2px; /* Adjust spacing between strings */
+	border-style: solid;
+	border-image : linear-gradient(to right, #000, #ccc) 1;
 }
 
 .active {
@@ -140,6 +142,7 @@ button {
 		</div>
 		<label><input type="checkbox" id="analyse_file"> <small>Analyse</small></label>
 		<input type="file" id="audioInput" accept="audio/*">
+		<div id="file_stats"></div>
 	</section>
 	<section>
 		<h2>Instruments</h2>
@@ -217,7 +220,7 @@ button {
 	</section>
     </main>
     <footer>
-        <p><small>This is a confidential experiment.<small></p>
+        <p><small>This is an open experiment.<small></p>
     </footer>
 <script type="module">
 import SoundViz from './3d_viz.js';
@@ -229,32 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
     <script>
-
-	const notes = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00];
-	const drums = [64, 95, 112, 140, 170];
-	const d_def = [[0, 1, 0.5, 0.25], [0, 0.1, 0.05, 0.025], [1100, 0.2, 0, 0.1]];
-	const strings = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534];
-	const s_def = [[0, 0.4, 0.3, 0.25], [0, 0, 0, 0 ], [1100, 0.2, 0.5, 0.1]];
-        const makeADSR = (type, def, index) => {
-		const vals = JSON.parse(JSON.stringify(def));
-		const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
-		if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
-		if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
-		console.log(vals[2])
-		return vals
-	}
-	const soundDefinitions = {
-            'example_sound':  notes.map(n => {  return [[n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]], [n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]] ] }),
-		'drumSounds': drums.map((d, i) => { return [ `f${d}`, [[d].concat(makeADSR('drum', d_def,i)),[d].concat(makeADSR('drum', d_def,i))]] }),
-		'stringSounds': strings.map((s, i) => { return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]] })
-        };
-
-const left_fviz = document.getElementById('left_f_visualizer');
-const right_fviz = document.getElementById('right_f_visualizer');
-const left_wviz = document.getElementById('left_w_visualizer');
-const right_wviz = document.getElementById('right_w_visualizer');
-
-
 function toggleSection (id, controller) {
     let target = document.querySelector("#" + id);
     if (target.style.display == 'block') {
@@ -295,7 +272,6 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
   document.head.appendChild(styleElement);
 }
 
-setRandomGlowBoxShadow();
 
 class FFT {
     constructor() {
@@ -447,9 +423,9 @@ class SoundEngine {
         oscillator.start(startTime);
 	let frameCount = 400;
 	let frameCountW = 400;
-	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
-	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
-		window.gl_viz.startVisualizationLoop(analyser, 100);
+	if (document.querySelector("#spectra").style.display != 'none')	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
+	if (document.querySelector("#wave").style.display != 'none')	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
+	if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyser, 50);
         oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
 	
 	
@@ -458,9 +434,11 @@ class SoundEngine {
     applyADSR(gainNode, adsr, startTime, oscillator) {
         const [attack, decay, sustain, release] = adsr;
         const sustainLevel = sustain;
-        gainNode.gain.setValueAtTime(0, startTime);
+	gainNode.gain.cancelScheduledValues(startTime);
+        gainNode.gain.setValueAtTime(0.001, startTime);
         gainNode.gain.linearRampToValueAtTime(1, startTime + attack);
         gainNode.gain.linearRampToValueAtTime(sustainLevel, startTime + attack + decay);
+	gainNode.gain.linearRampToValueAtTime(0.001, startTime + attack + decay + sustain + release);
 
     }
 	
@@ -678,6 +656,29 @@ function drawWaveformAxes(canvas, canvasContext) {
 }
 
 
+	const notes = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00];
+	const drums = [42, 64, 95, 112, 130, 154];
+	const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
+	const strings = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534];
+	const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
+        const makeADSR = (type, def, index) => {
+		const vals = JSON.parse(JSON.stringify(def));
+		const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
+		if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+		if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+		return vals
+	}
+	const soundDefinitions = {
+            'example_sound':  notes.map(n => {  return [[n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]], [n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]] ] }),
+		'drumSounds': drums.map((d, i) => { return [ `f${d}`, [[d].concat(makeADSR('drum', d_def,i)),[d].concat(makeADSR('drum', d_def,i))]] }),
+		'stringSounds': strings.map((s, i) => { return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]] })
+        };
+
+	const left_fviz = document.getElementById('left_f_visualizer');
+	const right_fviz = document.getElementById('right_f_visualizer');
+	const left_wviz = document.getElementById('left_w_visualizer');
+	const right_wviz = document.getElementById('right_w_visualizer');
+	setRandomGlowBoxShadow();
 
         const soundEngine = new SoundEngine();
 
@@ -734,7 +735,7 @@ document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd
 }
 
     const imaginary = document.querySelector("#piano_imag").value ? JSON.parse(document.querySelector("#piano_imag").value) : [0,0.5,0.5, 0.5, 0];
-    const ADSR = document.querySelector("#piano_adsr").value ? JSON.parse(document.querySelector("#piano_adsr").value) : [0, 0.9, 0, 0.9];
+    const ADSR = document.querySelector("#piano_adsr").value ? JSON.parse(document.querySelector("#piano_adsr").value) : [0.01, 0.9, 0, 0];
     const note = document.querySelector("#piano_real").value ? JSON.parse(document.querySelector("#piano_real").value) : [0, 1, 0.4, 0.2, 0.1];
 
     
@@ -752,10 +753,15 @@ function playDrumSound(soundName) {
 	soundEngine.playSoundFromArray([soundParams[1]]);
 }
 
-function playStringSound(soundName) {
+function playStringSound(soundName, bool, event) {
+
     const soundParams = soundDefinitions.stringSounds.find(ss => ss[0] == soundName)
     if (!soundParams) return;
-	soundEngine.playSoundFromArray([soundParams[1]]);
+	const sound = JSON.parse(JSON.stringify(soundParams[1]));
+	let f_pos = (event.offsetX/event.target.clientWidth)*20;
+	const f_freq = sound[0][0] * Math.pow(2, Math.floor(f_pos) / 12);
+	sound[0][0] = sound[1][0] = f_freq;
+	soundEngine.playSoundFromArray([sound]);
 
 }
 
@@ -832,7 +838,7 @@ soundDefinitions.stringSounds.forEach((ss, index) => {
     const stringDiv = document.createElement('div');
 	stringDiv.className = 'string';
 	stringDiv.setAttribute('data-sound', ss[0]);
-	stringDiv.style["border-bottom"] = `${5 - (index/2)}px solid #000`;
+	stringDiv.style["border-width"] = `0 0 ${5 - (index/2)}px 0`;
 	stringsContainer.appendChild(stringDiv);
 });
 }
@@ -846,25 +852,17 @@ function setupPointerEventsForInstrument(selector, playSoundFunction) {
     let isPointerDown = false;
 
     document.querySelectorAll(selector).forEach(element => {
-        element.addEventListener('pointerdown', event => {
-            isPointerDown = true;
-            playSoundFunction(element.getAttribute('data-sound'), true);
-		element.classList.toggle("active");
-
-        });
-
-        element.addEventListener('pointerenter', () => {
-            if (isPointerDown) {
-                playSoundFunction(element.getAttribute('data-sound'), true); 
-		element.classList.toggle("active");
-
-            }
-        });
-
-        ['pointerup', 'pointercancel'].forEach(type => {
-            element.addEventListener(type, () => {
+	['pointerdown'].forEach(type => {
+		element.addEventListener(type, (event) => {
+			isPointerDown = true;
+		            playSoundFunction(element.getAttribute('data-sound'), true, event);
+			element.classList.toggle("active");
+		});
+	});
+        ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
+            element.addEventListener(type, (event) => {
                 isPointerDown = false;
-                playSoundFunction(element.getAttribute('data-sound'), false); 
+                playSoundFunction(element.getAttribute('data-sound'), false, event); 
 		element.classList.remove("active");
 
             });
@@ -915,7 +913,7 @@ const progressBar = document.getElementById('progressBar');
 function updateProgressBar(audioSource, audioCtx) {
     if (audioSource.buffer) {
         const duration = audioSource.buffer.duration;
-        const currentTime = audioCtx.currentTime - audioSource.startTime;
+        const currentTime = audioCtx.currentTime - (audioSource.startTime ? audioSource.startTime: 0 );
         const progressPercentage = (currentTime / duration) * 100;
 	progressBar.style.width = progressPercentage + "%";
 	progressBar.style['background-color'] = window.currentTheme;
@@ -984,7 +982,7 @@ document.getElementById('audioInput').addEventListener('change', function(event)
 		drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
 		updateProgressBar(source, audioFileCtx);
 
-	if (document.querySelector("#analyse_file").value) {
+	if (document.querySelector("#analyse_file").checked) {
 		analyseSound(audioBuffer, sampleRate);
 	}
 	
@@ -1009,6 +1007,7 @@ window.refSound = {
 	fftResult,
 	sampleRate	
 }
+document.querySelector("#file_stats").innerHTML = JSON.stringify(window.refSound);
 
 }
 function calculateHarmonics(frequency, numHarmonics) {

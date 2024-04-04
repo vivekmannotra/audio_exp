@@ -148,6 +148,7 @@ this.compileShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
     }
 
     updatePositions(positions) {
+	this.positions = positions;
 	this.vertexCount = positions.length / 3;
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
@@ -220,12 +221,18 @@ startVisualizationLoop(analyser, maxIterations = 100) {
 	analyser.getByteTimeDomainData(wave);
 
 
-   let positions = [];
+   let positions = this.positions || [];
 	let peakF = Math.max(...freq);
 	let peakW = Math.max(...wave);
 
 const maxHeight = 2; 
     const maxDepth = 1; 
+
+ if (this.currentTimeStep === undefined) {
+        this.currentTimeStep = 0;
+    } else {
+        this.currentTimeStep += 0.01;
+    }
     
     const waveSize = wave.length;
 	const freqSize = freq.length;
@@ -233,7 +240,7 @@ const maxHeight = 2;
     const wavePointsPerFreq = waveSize / freqSize;
 
     for (let i = 0; i < freqSize; i++) {
-        const x = timeStep; // Time progression
+        const x = this.currentTimeStep; // Time progression
         const y = (freq[i] / peakF) * maxHeight;
         
         let waveSegmentSum = 0;
@@ -246,8 +253,8 @@ const maxHeight = 2;
         positions.push(x, y, z);
     }
 
-freq.forEach((value, index) => { positions.push(-1*index/freq.length);    positions.push(-1*value/peakF);    positions.push(0); }); 
-wave.forEach((value, index) => { positions.push(-1*index/wave.length);    positions.push(-1*value/peakW);    positions.push(0); }); 
+//freq.forEach((value, index) => { positions.push(-1*index/freq.length);    positions.push(-1*value/peakF);    positions.push(0); }); 
+//wave.forEach((value, index) => { positions.push(-1*index/wave.length);    positions.push(-1*value/peakW);    positions.push(0); }); 
 
     this.updatePositions(positions);
     this.draw();
