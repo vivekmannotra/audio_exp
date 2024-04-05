@@ -196,11 +196,16 @@ if (error !== this.gl.NO_ERROR) {
     }
 
 startVisualizationLoop(analyser, maxIterations = 100) {
+	this.resetCamera();
     let iterationCount = 0;
-
+	this.frequencyPositions = [];
+	this.waveformPositions = [];
+	this.currentFreqTimeStep = undefined;
+	this.currentWaveTimeStep = undefined;
+	this.maxIter = maxIterations;
     const drawLoop = () => {
         
-        if (iterationCount < maxIterations) {
+        if (iterationCount <= maxIterations) {
             this.updatePositionsFromAudio(analyser);
         	iterationCount++; 
         	requestAnimationFrame(drawLoop);
@@ -213,51 +218,70 @@ startVisualizationLoop(analyser, maxIterations = 100) {
 
 
 	updatePositionsFromAudio(analyser) {
-
-	const freq = new Uint8Array(analyser.frequencyBinCount);
-	const wave = new Uint8Array(analyser.fftSize);
-
-	analyser.getByteFrequencyData(freq);
-	analyser.getByteTimeDomainData(wave);
-
-
-   let positions = this.positions || [];
-	let peakF = Math.max(...freq);
-	let peakW = Math.max(...wave);
-
-const maxHeight = 2; 
-    const maxDepth = 1; 
-
- if (this.currentTimeStep === undefined) {
-        this.currentTimeStep = 0;
-    } else {
-        this.currentTimeStep += 0.01;
-    }
-    
-    const waveSize = wave.length;
-	const freqSize = freq.length;
-	const timeStep = 0;
-    const wavePointsPerFreq = waveSize / freqSize;
-
-    for (let i = 0; i < freqSize; i++) {
-        const x = this.currentTimeStep; // Time progression
-        const y = (freq[i] / peakF) * maxHeight;
-        
-        let waveSegmentSum = 0;
-        for (let j = 0; j < wavePointsPerFreq; j++) {
-            const waveIndex = Math.floor(i * wavePointsPerFreq + j);
-            waveSegmentSum += wave[waveIndex];
-        }
-        const z = ((waveSegmentSum / wavePointsPerFreq) / peakW) * maxDepth - (maxDepth / 2);
-
-        positions.push(x, y, z);
-    }
+	let positions = [];
+	positions  = positions.concat(this.updateFrequencyPositions(analyser));
+	positions  = positions.concat(this.updateWaveformPositions(analyser));
 
 //freq.forEach((value, index) => { positions.push(-1*index/freq.length);    positions.push(-1*value/peakF);    positions.push(0); }); 
 //wave.forEach((value, index) => { positions.push(-1*index/wave.length);    positions.push(-1*value/peakW);    positions.push(0); }); 
+	  this.updatePositions(positions);
+	    this.draw();
 
-    this.updatePositions(positions);
-    this.draw();
+}
+	
+updateFrequencyPositions(analyser) {
+    const freq = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(freq);
+
+    if (!this.frequencyPositions) {
+        this.frequencyPositions = [];
+    }
+    if (this.currentFreqTimeStep === undefined) {
+        this.currentFreqTimeStep = 0;
+    } else {
+        this.currentFreqTimeStep += 0.01;
+    }
+
+    let peakF = Math.max(...freq) || 1;
+
+    const maxHeight = 1;
+
+    for (let i = 0; i < freq.length; i++) {
+        const x = this.currentFreqTimeStep;
+        const y = i == 0 ? i : (i/1000);
+        const z = (freq[i] / peakF) * maxHeight; 
+
+        this.frequencyPositions.push(x, y, z);
+    }
+
+	return this.frequencyPositions;
+}
+
+
+updateWaveformPositions(analyser) {
+    const wave = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(wave);
+
+    if (!this.waveformPositions) {
+        this.waveformPositions = []; 
+    }
+    if (this.currentWaveTimeStep === undefined) {
+        this.currentWaveTimeStep = 0; 
+    } else {
+        this.currentWaveTimeStep += 0.01;
+    }
+
+    let peakW = Math.max(...wave) || 1;
+
+    const maxHeight = 1;
+    for (let i = 0; i < wave.length; i++) {
+        const x = -1*this.currentWaveTimeStep;
+        const y = -1*(wave[i] / peakW) * maxHeight; 
+        const z = 0;
+        this.waveformPositions.push(x, y, ((wave .length/2) - i)/1000); 
+    }
+
+	return  this.waveformPositions;
 }
 
     
@@ -288,6 +312,13 @@ const maxHeight = 2;
         this.lastMouseY = event.clientY;
     }
 
+	resetCamera() {
+		this.cameraAngleX = -3* Math.PI/4;
+		this.cameraAngleY = -1* Math.PI/4;
+		this.updateModelViewMatrix();
+		    this.draw();
+	}
+
     rotateCamera(deltaX, deltaY) {
 
     if (this.cameraAngleY) { this.cameraAngleY += deltaX * 0.01; } else { this.cameraAngleY = deltaX * 0.01; }
@@ -300,7 +331,7 @@ const maxHeight = 2;
 updateModelViewMatrix() {
 
 	
-let radius = 10; 
+let radius = 6; 
 
 let cameraPosX = radius * Math.sin(this.cameraAngleY) * Math.cos(this.cameraAngleX);
 let cameraPosY = radius * Math.sin(this.cameraAngleX);
