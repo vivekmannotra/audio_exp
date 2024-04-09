@@ -72,6 +72,149 @@
 	border-image : linear-gradient(to right, #000, #ccc) 1;
 }
 
+ .balafon {
+            display: flex;
+		flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .bf-key {
+            width: 60px;
+            height: 200px;
+            background-color: #8b4513;
+            border: 2px solid #654321;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+
+        .play-balafon {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #6a994e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+ .oboe {
+            position: relative;
+            width: 50px;
+            height: 250px;
+            background-color: brown;
+            border-radius: 20px;
+        }
+
+        .oboe-body {
+            position: absolute;
+            top: 25px;
+            left: 25%;
+            width: 50%;
+            height: 80%;
+            background-color: sienna;
+            border-radius: 10px;
+        }
+
+        .oboe-keys {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            right: 0;
+            margin: auto;
+            width: 10px;
+            height: 10px;
+            background-color: silver;
+            border-radius: 50%;
+            box-shadow: 0 0 0 10px silver, 0 0 0 20px silver, 0 0 0 30px silver;
+        }
+
+        .oboe-bell {
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            width: 80%;
+            height: 25px;
+            background-color: sienna;
+            border-bottom-left-radius: 50px;
+            border-bottom-right-radius: 50px;
+        }
+
+
+        .switch {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+   .tablas {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 50px;
+        }
+
+        .dayan, .bayan {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background: radial-gradient(circle, lightgray 0%, gray 80%);
+            box-shadow: inset 0 0 10px #000, 0 0 20px #000;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .dayan {
+            width: 150px;
+            height: 150px;
+        }
+
+        .bayan {
+            width: 200px;
+            height: 200px;
+        }
+
+        .play-tabla {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+.bansuri {
+            position: relative;
+            width: 20px;
+            height: 400px;
+            background-color: #8B4513;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 20px 0;
+        }
+
+        .bansuri-key {
+            width: 16px;
+            height: 16px;
+            background-color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .bansuri-key:active {
+            background-color: #ddd; /* Simulate pressing a key */
+        }
+
 .active {
 		transform: rotateX(-20deg) translateZ(-15px);
 	}
@@ -107,8 +250,9 @@ button {
 }
 #glCanvas {
             height: 80vh;
-            width: 80vw;
+            width: 100%;
         }
+
 
 </style>
 </head>
@@ -149,6 +293,7 @@ button {
 		<p>
 		<button onclick="toggleSection('keys', this)">Piano</button>
 		<button onclick="toggleSection('percuss', this)">Drums</button>
+		<button onclick="toggleSection('wind', this)">Wind</button>
 		<button onclick="toggleSection('str', this)">Strings</button>
 		<button onclick="toggleSection('tape', this)">Tape</button>
 		</p>
@@ -163,6 +308,22 @@ button {
 	</section>
 	<section id="percuss" style="display: flex;">
 		<div id="drums" class="drums"></div>
+		<div class="balafon">
+</div>
+	<div class="tablas">
+    <div class="dayan">Dayan</div>
+    <div class="bayan">Bayan</div>
+</div>
+	</section>
+	<section id="wind">
+		<div class="oboe">
+    <div class="oboe-body"></div>
+    <div class="oboe-keys"></div>
+    <div class="oboe-bell"></div>
+</div>
+<div class="bansuri">
+    <div class="bansuri-key"></div>
+</div>
 	</section>
 	<section id="str" style="display: flex;">
 		<div id="strings" class="strings"></div>
@@ -224,10 +385,12 @@ button {
     </footer>
 <script type="module">
 import SoundViz from './3d_viz.js';
+import * as SM from './sound.js';
 
 document.addEventListener('DOMContentLoaded', () => {
    window.gl_viz = new SoundViz('glCanvas');
-
+	window.SM = SM;
+	window.soundEngine = new SM.SoundEngine();
 });
 </script>
 
@@ -272,391 +435,8 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
   document.head.appendChild(styleElement);
 }
 
-
-class FFT {
-    constructor() {
-       
-    }
-
-   // Preprocess input to ensure it's suitable for FFT
-    preprocessInput(input) {
-        const validInput = input.map(value => ({
-            re: typeof value.re === "number" && !isNaN(value.re) ? value.re : 0,
-            im: typeof value.im === "number" && !isNaN(value.im) ? value.im : 0
-        }));
-
-        const adjustedSize = this.adjustToPowerOfTwo(validInput.length);
-        return validInput.slice(0, adjustedSize).concat(
-            new Array(adjustedSize - validInput.length).fill({re: 0, im: 0})
-        );
-    }
-
-    // Main FFT function with preprocessing
-    transform(input) {
-        if (!input || !Array.isArray(input)) {
-            throw new Error("Invalid input for FFT transform.");
-        }
-        
-        // Preprocess input to replace non-numeric values with 0 and adjust to nearest power of two
-        const preprocessedInput = this.preprocessInput(input);
-        return this.fft(preprocessedInput, false);
-    }
-
-    // Inverse FFT function with data preprocessing
-    inverseTransform(input) {
-        if (!input || !Array.isArray(input) || input.length !== this.size) {
-            throw new Error("Invalid input for FFT inverse transform.");
-        }
-        const processedInput = this.preprocessData(input);
-        return this.fft(processedInput, true);
-    }
-
-    // Internal FFT algorithm (recursive Cooley-Tukey)
-    fft(input, inverse) {
-        const N = input.length;
-        if (N <= 1) return input;
-
-        // Filter inputs for even and odd indices, adding null checks
-        const even = this.fft(input.filter((_, i) => i % 2 === 0), inverse);
-        const odd = this.fft(input.filter((_, i) => i % 2 !== 0), inverse);
-        const combined = new Array(N).fill(null).map(() => ({re: 0, im: 0}));
-
-        for (let k = 0; k < N / 2; k++) {
-            const angle = 2 * Math.PI * k / N * (inverse ? 1 : -1);
-            const exp = { re: Math.cos(angle), im: Math.sin(angle) };
-            const term = this.multiplyComplex(odd[k], exp);
-            combined[k] = this.addComplex(even[k], term);
-            combined[k + N / 2] = this.subtractComplex(even[k], term);
-        }
-
-        // Normalize the inverse transform
-        if (inverse) {
-            return combined.map(c => ({ re: c.re / N, im: c.im / N }));
-        }
-
-        return combined;
-    }
-
-	// Adjust the array size to the nearest power of two
-    adjustToPowerOfTwo(size) {
-        return Math.pow(2, Math.ceil(Math.log2(size)));
-    }
-
-    // Complex number arithmetic functions
-    addComplex(a, b) {
-        return { re: a.re + b.re, im: a.im + b.im };
-    }
-
-    subtractComplex(a, b) {
-        return { re: a.re - b.re, im: a.im - b.im };
-    }
-
-    multiplyComplex(a, b) {
-        return { re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re };
-    }
-
-    // Utility function to check if a number is a power of two
-    isPowerOfTwo(n) {
-        return n && (n & (n - 1)) === 0;
-    }
-}
-
-
-class SoundEngine {
-    constructor() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-	this.nextStartTime = this.audioContext.currentTime;
-	this.oscillators = [];
-	this.recording = false;
-        this.startTime = 0;
-        this.recordedData = [];
-        this.isPlaying = false; 
-    }
-
-    playSoundFromArray(soundData) {
-	if (!this.isPlaying) {	
-            this.isPlaying = true;
-        }
-        let startTime = this.audioContext.currentTime;
-
-        soundData.forEach(([leftData, rightData]) => {
-            this.playChannel(leftData, startTime, -1); 
-            this.playChannel(rightData, startTime, 1);  
-		startTime  += Math.max(leftData[3][3], rightData[3][3]) + 0.5;
-        });
-	if (this.recording) {
-		soundData.forEach(sd => { this.recordedData.push(sd) });
-		this.startTime += startTime;
-	}
-    }
-
-    playChannel(channelData, startTime, panValue) {
-        const [frequency, real, imag, adsr] = channelData;
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        const panner = this.audioContext.createStereoPanner();
-	const analyser = this.audioContext.createAnalyser();
-	analyser.fftSize = 1024;
-    	const dataArray = new Uint8Array(analyser.frequencyBinCount);
-    	const dataArrayW = new Uint8Array(analyser.fftSize);
-
-        // Create and set the custom waveform
-        const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
-        oscillator.setPeriodicWave(periodicWave);
-        oscillator.frequency.value = frequency;	
-
-        // Apply ADSR envelope
-        this.applyADSR(gainNode, adsr, startTime, oscillator);
-
-        // Set panner value for stereo effect
-        panner.pan.setValueAtTime(panValue, startTime);
-
-        // Connect and play
-        oscillator.connect(gainNode);
-	gainNode.connect(analyser);
-	analyser.connect(panner);
-        panner.connect(this.audioContext.destination);
-
-	const canvasContext = panValue >= 0 ? setupCanvas(right_fviz) : setupCanvas(left_fviz);
-	const canvasContextW = panValue >= 0 ? setupCanvas(right_wviz) : setupCanvas(left_wviz);
-	this.oscillators.push(oscillator); 
-        oscillator.start(startTime);
-	let frameCount = 400;
-	let frameCountW = 400;
-	if (document.querySelector("#spectra").style.display != 'none')	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
-	if (document.querySelector("#wave").style.display != 'none')	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
-	if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyser, 10);
-        oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
-	
-	
-    }
-
-    applyADSR(gainNode, adsr, startTime, oscillator) {
-        const [attack, decay, sustain, release] = adsr;
-        const sustainLevel = sustain;
-	gainNode.gain.cancelScheduledValues(startTime);
-        gainNode.gain.setValueAtTime(0.001, startTime);
-        gainNode.gain.linearRampToValueAtTime(1, startTime + attack);
-        gainNode.gain.linearRampToValueAtTime(sustainLevel, startTime + attack + decay);
-	gainNode.gain.linearRampToValueAtTime(0.001, startTime + attack + decay + sustain + release);
-
-    }
-	
-    pause() {
-        if (this.isPlaying) {
-            this.audioContext.suspend();
-            this.isPlaying = false;
-        }
-    }
-
-    stop() {
-        if (this.isPlaying) {
-            this.oscillators.forEach(oscillator => oscillator.stop());
-            this.oscillators = [];
-            this.audioContext.close();
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            this.isPlaying = false;
-        }
-    }
-
-    record() {
-        this.recording = !this.recording;
-    }
-
-}
-
-function setupCanvas(canvas) {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr); // Scale all drawing operations by the dpr, making them crisp
-    
-    ctx.font = '8px Arial'; // Adjust font size as needed
-    ctx.textAlign = 'left'; // Reset or set text alignment as needed
-    ctx.textBaseline = 'middle'; // Adjust baseline as needed
-    
-    return ctx; // In case you need to work with context directly afterward
-}
-
-function drawFrequency(canvas, canvasContext, analyser, dataArray, frameCount) {
-	if (canvasContext && frameCount) {
-
-	    	analyser.getByteFrequencyData(dataArray);
-
-	drawAxesWithLabels(canvas, canvasContext, analyser);
-    
-const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-    const padding = 20; // Ensure this matches with drawAxesAndLabels
-    const barWidth = (width - 2 * padding) / dataArray.length;
-    const nyquistFrequency = analyser.context.sampleRate / 2;
-
-    canvasContext.clearRect(padding, padding, width - 2 * padding, height - 2 * padding); // Clear only the chart area
-
-    for (let i = 0; i < dataArray.length; i++) {
-        const value = dataArray[i];
-        const barHeight = (value / 255.0) * (height - 2 * padding); // Scale bar height to canvas size and padding
-        const x = padding + i * barWidth;
-        const y = height - padding - barHeight; // Start drawing bars up from the bottom padding
-
-        canvasContext.fillStyle = window.currentTheme;
-        canvasContext.fillRect(x, y, barWidth, barHeight);
-    }
-	frameCount--;
-	requestAnimationFrame(() => drawFrequency(canvas, canvasContext, analyser, dataArray, frameCount));
-	
-
-	}
-
-}
-
-
-function drawWaveform(canvas, canvasContext, analyser, dataArray, frameCount) {
-	if (canvasContext && frameCount) {
-
-    	analyser.getByteTimeDomainData(dataArray);
-
-	drawWaveformAxes(canvas, canvasContext, analyser);
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-    const padding = 20; // Padding around the canvas
-
-    const segmentWidth = (width - 2 * padding) / dataArray.length;
-        
-        canvasContext.clearRect(padding, padding, width - 2 * padding, height - 2 * padding); // Clear the chart area
-
-        canvasContext.beginPath();
-        canvasContext.strokeStyle = window.currentTheme;
-        for (let i = 0; i < dataArray.length; i++) {
-            const value = dataArray[i];
-            const x = padding + i * segmentWidth;
-            const y = ((value / 255.0) * (height - 2 * padding)) + padding;
-
-            if (i === 0) {
-                canvasContext.moveTo(x, y);
-            } else {
-                canvasContext.lineTo(x, y);
-            }
-        }
-        canvasContext.stroke();
-	frameCount--;
-	requestAnimationFrame(() => drawWaveform(canvas, canvasContext, analyser, dataArray, frameCount));
-	
-
-	}
-}
-
-
-function drawAxesWithLabels(canvas, canvasContext, analyser) {
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-    const padding = 20; // Space for labels
-
-    // Clear canvas and prepare for drawing axes
-    canvasContext.clearRect(0, 0, width, height);
-
-    // Draw X-axis at the bottom
-    canvasContext.beginPath();
-    canvasContext.moveTo(padding, height - padding);
-    canvasContext.lineTo(width - padding, height - padding);
-    canvasContext.stroke();
-
-    // Draw Y-axis on the left
-    canvasContext.beginPath();
-    canvasContext.moveTo(padding, height - padding);
-    canvasContext.lineTo(padding, padding);
-    canvasContext.stroke();
-
-    // Frequency labels for X-axis
-    const freqLabelsCount = 10; // Adjust based on preference
-    const nyquistFrequency = analyser.context.sampleRate / 2;
-    for (let i = 0; i <= freqLabelsCount; i++) {
-        const x = padding + (i / freqLabelsCount) * (width - 2 * padding);
-        const frequency = (i / freqLabelsCount) * nyquistFrequency;
-        // Draw tick
-        canvasContext.beginPath();
-        canvasContext.moveTo(x, height - padding);
-        canvasContext.lineTo(x, height - padding + 5);
-        canvasContext.stroke();
-        // Draw label
-        canvasContext.fillText(`${Math.round(frequency)}Hz`, x, height - 5);
-    }
-
-    // Amplitude labels for Y-axis
-    const ampLabelsCount = 5; // Adjust based on preference
-    for (let i = 0; i <= ampLabelsCount; i++) {
-        const y = height - padding - (i / ampLabelsCount) * (height - 2 * padding);
-        // Draw tick
-        canvasContext.beginPath();
-        canvasContext.moveTo(padding, y);
-        canvasContext.lineTo(padding - 5, y);
-        canvasContext.stroke();
-        // Draw label
-        canvasContext.fillText(`${i * 20}%`, 0, y); // Example: amplitude as a percentage
-    }
-
-    canvasContext.textAlign = 'center'; // Reset text alignment for general use
-
-}
-
-
-function drawWaveformAxes(canvas, canvasContext) {
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-    const padding = 20; // Space for labels
-
-    // Clear canvas and prepare for drawing axes
-    canvasContext.clearRect(0, 0, width, height);
-
-    // Draw X-axis at the bottom
-    canvasContext.beginPath();
-    canvasContext.moveTo(padding, height - padding);
-    canvasContext.lineTo(width - padding, height - padding);
-    canvasContext.stroke();
-
-    // Draw Y-axis on the left
-    canvasContext.beginPath();
-    canvasContext.moveTo(padding, height - padding);
-    canvasContext.lineTo(padding, padding);
-    canvasContext.stroke();
-
-    // Time labels for X-axis (assuming total duration is accessible)
-    const timeLabelsCount = 10; // Adjust based on preference
-    const totalDuration = 1; // Placeholder, replace with actual duration in seconds
-    for (let i = 0; i <= timeLabelsCount; i++) {
-        const x = padding + (i / timeLabelsCount) * (width - 2 * padding);
-        const time = (i / timeLabelsCount) * totalDuration;
-        // Draw tick
-        canvasContext.beginPath();
-        canvasContext.moveTo(x, height - padding);
-        canvasContext.lineTo(x, height - padding + 5);
-        canvasContext.stroke();
-        // Draw label
-        canvasContext.fillText(`${time.toFixed(2)}s`, x, height - 5);
-    }
-
-    // Amplitude labels for Y-axis
-    const ampLabelsCount = 5; // Adjust based on preference
-    for (let i = 0; i <= ampLabelsCount; i++) {
-        const amplitude = -1 + (i / ampLabelsCount) * 2; // Normalize between -1 and 1
-        const y = height - padding - (i / ampLabelsCount) * (height - 2 * padding);
-        // Draw tick
-        canvasContext.beginPath();
-        canvasContext.moveTo(padding, y);
-        canvasContext.lineTo(padding - 5, y);
-        canvasContext.stroke();
-        // Considering amplitude is normalized, label accordingly
-        canvasContext.fillText(`${amplitude.toFixed(1)}`, 0, y);
-    }
-
-    canvasContext.textAlign = 'center'; // Reset text alignment for general use
-}
-
-
 	const notes = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00];
+
 	const drums = [42, 64, 95, 112, 130, 154];
 	const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
 	const strings = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534];
@@ -666,12 +446,23 @@ function drawWaveformAxes(canvas, canvasContext) {
 		const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
 		if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
 		if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+		if (type == 'bala') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
+		if (type == 'tabla') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
 		return vals
 	}
 	const soundDefinitions = {
             'example_sound':  notes.map(n => {  return [[n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]], [n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]] ] }),
 		'drumSounds': drums.map((d, i) => { return [ `f${d}`, [[d].concat(makeADSR('drum', d_def,i)),[d].concat(makeADSR('drum', d_def,i))]] }),
-		'stringSounds': strings.map((s, i) => { return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]] })
+		'stringSounds': strings.map((s, i) => { return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]] }),
+		"balafon": [185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33].map((s,i) => {
+				return [ `b${s}`, [[s].concat(makeADSR('bala', [],i)), [s].concat(makeADSR('bala', [],i))]]
+				}),
+  		"tabla": {
+		    "dayan": [246.94, 261.63, 277.18, 293.66].map((s,i)=>{ return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]] }),
+		    "bayan": [110.00, 116.54].map((s,i)=>{ return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]] })
+		  },
+		  "oboe": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25], // C4 to C5
+		  "bansuri": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25] 
         };
 
 	const left_fviz = document.getElementById('left_f_visualizer');
@@ -680,7 +471,7 @@ function drawWaveformAxes(canvas, canvasContext) {
 	const right_wviz = document.getElementById('right_w_visualizer');
 	setRandomGlowBoxShadow();
 
-        const soundEngine = new SoundEngine();
+
 
         document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
 
@@ -689,7 +480,7 @@ function drawWaveformAxes(canvas, canvasContext) {
 		let input = document.querySelector("#inp_a").value;
 		console.log(input);
                 const dataArray = JSON.parse(input);
-                soundEngine.playSoundFromArray(dataArray)
+                window.soundEngine.playSoundFromArray(dataArray)
                 document.querySelector("#info").innerHTML = '';
             } catch (e) {
                 document.querySelector("#info").innerHTML = `Error: ${e}`;
@@ -697,12 +488,12 @@ function drawWaveformAxes(canvas, canvasContext) {
         }
 
         document.querySelector("#btn_a").addEventListener("click", playSoundA);
-        document.querySelector("#btn_b").addEventListener("click", () => { soundEngine.pause() });
+        document.querySelector("#btn_b").addEventListener("click", () => { window.soundEngine.pause() });
         document.querySelector("#btn_c").addEventListener("click", () => { 
-		soundEngine.stop();
-		document.querySelector("#inp_a").value = JSON.stringify(soundEngine.recordedData);
+		window.soundEngine.stop();
+		document.querySelector("#inp_a").value = JSON.stringify(window.soundEngine.recordedData);
 	});
-        document.querySelector("#btn_d").addEventListener("click", () => { soundEngine.record() });
+        document.querySelector("#btn_d").addEventListener("click", () => { window.soundEngine.record() });
         document.querySelector("#btn_e").addEventListener("click", () => { 
 		document.querySelector("#inp_a").value = ''; 
 		document.querySelector("#info").innerHTML = '';
@@ -744,13 +535,15 @@ document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd
         [frequency , note, imaginary, ADSR]  
     ];
 
-    soundEngine.playSoundFromArray([soundData]);
+    window.soundEngine.playSoundFromArray([soundData]);
 
 }
 function playDrumSound(soundName) {
-    const soundParams = soundDefinitions.drumSounds.find(ds => ds[0] == soundName);
-    if (!soundParams) return;
-	soundEngine.playSoundFromArray([soundParams[1]]);
+    let soundParams = soundDefinitions.drumSounds.find(ds => ds[0] == soundName);
+    if (!soundParams) soundParams = soundDefinitions.balafon.find(ds => ds[0] == soundName);
+    if (!soundParams) soundParams = soundDefinitions.tabla.dayan.find(ds => ds[0] == soundName);
+    if (!soundParams) soundParams = soundDefinitions.tabla.bayan.find(ds => ds[0] == soundName);
+	window.soundEngine.playSoundFromArray([soundParams[1]]);
 }
 
 function playStringSound(soundName, bool, event) {
@@ -761,7 +554,7 @@ function playStringSound(soundName, bool, event) {
 	let f_pos = (event.offsetX/event.target.clientWidth)*20;
 	const f_freq = sound[0][0] * Math.pow(2, Math.floor(f_pos) / 12);
 	sound[0][0] = sound[1][0] = f_freq;
-	soundEngine.playSoundFromArray([sound]);
+	window.soundEngine.playSoundFromArray([sound]);
 
 }
 
@@ -769,14 +562,14 @@ function makePiano (keys=88) {
 
 	const piano = document.getElementById('piano');
 const baseKeyWidth = 20;
-
-	const size = (window.innerWidth/baseKeyWidth)*(7/5);
+	const screen = window.innerWidth || window.screen.availWidth;
+	const size = (screen/baseKeyWidth)*(7/5);
 	if (size < keys) keys = size;
 
 const whiteKeyWidth = baseKeyWidth + 'px';
 const blackKeyWidth = Math.floor(baseKeyWidth * 0.6) + 'px';
-const whiteKeyHeight = '100px'; // Fixed height for white keys
-const blackKeyHeight = '60px'; // Black keys are 60% of the height of white keys
+const whiteKeyHeight = '100px';
+const blackKeyHeight = '60px';
 
 const notes = [ 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
 let octave = 0;
@@ -829,6 +622,24 @@ soundDefinitions.drumSounds.forEach(ds => {
     drumDiv.textContent = ds[0];
     drumsContainer.appendChild(drumDiv);
 });
+
+const tablaContainer = document.getElementById('drums');
+	const dayan = document.querySelector(".dayan");
+	dayan.setAttribute('data-sound', soundDefinitions.tabla.dayan[0][0])
+	const bayan = document.querySelector(".bayan");
+	bayan.setAttribute('data-sound', soundDefinitions.tabla.bayan[0][0]);
+
+const balafonContainer = document.querySelector('.balafon');
+
+soundDefinitions.balafon.forEach((ds, i) => {
+    const balaDiv = document.createElement('div');
+    balaDiv.className = 'bf-key';
+    balaDiv.setAttribute('data-sound', ds[0]);
+    balaDiv.textContent = ds[0];
+	balaDiv.style.height = 60 + (i*10) + 'px';
+    balafonContainer.appendChild(balaDiv);
+});
+
 }
 
 function makeStrings() {
@@ -872,6 +683,9 @@ function setupPointerEventsForInstrument(selector, playSoundFunction) {
 setupPointerEventsForInstrument('.drum', playDrumSound);
 setupPointerEventsForInstrument('.string', playStringSound);
 setupPointerEventsForInstrument('.key', playNote);
+setupPointerEventsForInstrument('.bf-key', playDrumSound);
+setupPointerEventsForInstrument('.dayan', playDrumSound);
+setupPointerEventsForInstrument('.bayan', playDrumSound);
 
 function addToTape() {
 	let existing = document.querySelector("#inp_a").value;
@@ -999,7 +813,7 @@ document.getElementById('audioInput').addEventListener('change', function(event)
 function analyseSound (audioBuffer, sampleRate) {
 	const audioData = audioBuffer.getChannelData(0); 
 const complexData = Array.from(audioData).map(re => ({ re, im: 0 }));
-const fft = new FFT();
+const fft = new window.SM.FFT();
 const fftResult = fft.transform(complexData);
 const magnitudes = fftResult.map(c => Math.sqrt(c.re ** 2 + c.im ** 2));
 const phases = fftResult.map(c => Math.atan2(c.im, c.re));

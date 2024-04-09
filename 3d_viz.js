@@ -286,9 +286,9 @@ updateWaveformPositions(analyser) {
 
     
     initEventListeners() {
-        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('pointerdown', (e) => this.handleMouseDown(e));
+        document.addEventListener('pointerup', (e) => this.handleMouseUp(e));
+        this.canvas.addEventListener('pointermove', (e) => this.handleMouseMove(e));
     }
 
     handleMouseDown(event) {
