@@ -192,14 +192,14 @@
         }
 .bansuri {
             position: relative;
-            width: 20px;
-            height: 400px;
-            background-color: #8B4513;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            padding: 20px 0;
+width: 400px;
+height: 20px;
+background-color: #8B4513;
+border-radius: 10px;
+display: flex;
+flex-direction: row;
+justify-content: space-around;
+padding: 5px 20px;
         }
 
         .bansuri-key {
@@ -248,10 +248,29 @@ button {
 	gap: 0.5em;
 	flex-wrap: wrap;
 }
+#gl_viz, #spectra, #wave {
+	position: sticky;
+	top: 50px;
+	z-index: 3;
+}
 #glCanvas {
+
+            height: 60vh;
+            width: 60%;
+		margin: 0 20%;
+        }
+
+@media (max-width: 600px) {
+
+#glCanvas {
+
             height: 80vh;
             width: 100%;
-        }
+		margin: 0;
+
+}
+
+}
 
 
 </style>
@@ -316,13 +335,7 @@ button {
 </div>
 	</section>
 	<section id="wind">
-		<div class="oboe">
-    <div class="oboe-body"></div>
-    <div class="oboe-keys"></div>
-    <div class="oboe-bell"></div>
-</div>
 <div class="bansuri">
-    <div class="bansuri-key"></div>
 </div>
 	</section>
 	<section id="str" style="display: flex;">
@@ -448,6 +461,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 		if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
 		if (type == 'bala') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
 		if (type == 'tabla') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
+		if (type == 'bansuri') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
 		return vals
 	}
 	const soundDefinitions = {
@@ -461,9 +475,9 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 		    "dayan": [246.94, 261.63, 277.18, 293.66].map((s,i)=>{ return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]] }),
 		    "bayan": [110.00, 116.54].map((s,i)=>{ return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]] })
 		  },
-		  "oboe": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25], // C4 to C5
-		  "bansuri": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25] 
+		  "bansuri": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25].map((s,i)=>{ return [`b${s}`, [[s].concat(makeADSR('bansuri',[],i)), [s].concat(makeADSR('bansuri',[],i))]] }) 
         };
+
 
 	const left_fviz = document.getElementById('left_f_visualizer');
 	const right_fviz = document.getElementById('right_f_visualizer');
@@ -555,6 +569,14 @@ function playStringSound(soundName, bool, event) {
 	const f_freq = sound[0][0] * Math.pow(2, Math.floor(f_pos) / 12);
 	sound[0][0] = sound[1][0] = f_freq;
 	window.soundEngine.playSoundFromArray([sound]);
+
+}
+
+function playWindSound(soundName, bool, event) {
+
+    const soundParams = soundDefinitions.bansuri.find(ss => ss[0] == soundName)
+    if (!soundParams) return;
+	window.soundEngine.playSoundFromArray([soundParams[1]]);
 
 }
 
@@ -654,9 +676,22 @@ soundDefinitions.stringSounds.forEach((ss, index) => {
 });
 }
 
+function makeWinds() {
+	const bansuriContainer = document.querySelector('.bansuri');
+
+soundDefinitions.bansuri.forEach((ss, index) => {
+    const bansuriDiv = document.createElement('div');
+	bansuriDiv.className = 'bansuri-key';
+	bansuriDiv.setAttribute('data-sound', ss[0]);
+	bansuriDiv.style.top = `${(index+1)*50}px`;
+	bansuriContainer.appendChild(bansuriDiv);
+});
+}
+
 makePiano();
 makeDrums();
 makeStrings();
+makeWinds();
 
 
 function setupPointerEventsForInstrument(selector, playSoundFunction) {
@@ -686,6 +721,7 @@ setupPointerEventsForInstrument('.key', playNote);
 setupPointerEventsForInstrument('.bf-key', playDrumSound);
 setupPointerEventsForInstrument('.dayan', playDrumSound);
 setupPointerEventsForInstrument('.bayan', playDrumSound);
+setupPointerEventsForInstrument('.bansuri-key', playWindSound);
 
 function addToTape() {
 	let existing = document.querySelector("#inp_a").value;
