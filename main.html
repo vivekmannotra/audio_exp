@@ -4,276 +4,7 @@
  	<meta charset="UTF-8">
     	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Audio Experiment</title>
-<style>
-	body {
-		font-family: sans-serif;
-		margin: 0;
-	}
-	main {
-		margin: 5vh 5vw;
-	}
-	section {
-		display: block;
-	}
-        .piano {
-            display: flex;
-            flex-wrap: wrap;
-            width: auto;
-            height: 100px;
-            position: relative;
-        }
-        .key {
-            box-sizing: border-box;
-            border: 1px solid #000;
-            height: 100%;
-		cursor: pointer;
-            position: relative;
-		transition: transform 0.2s ease;
-            z-index: 1;
-        }
-	
-	.key-tag {
-		position: absolute;
-		bottom: 0;	
-		font-size: 8px;
-	}
-   	.drums {
-    		display: flex;
-	flex-wrap: wrap;
-
-    	padding: 20px;
-	}
-.drum {
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(#ccc, #333);;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-		transition: transform 0.2s ease;
-    margin: 5px;
-}
-.strings {
-    display: flex;
-    flex-direction: column;
-	padding: 20px;
-    justify-content: space-between;
-	width: 100%;
-}
-
-.string {
-    flex-grow: 1;
-    cursor: pointer;
-	height: 30px;
-		transition: transform 0.2s ease;
-    margin: 0 2px; /* Adjust spacing between strings */
-	border-style: solid;
-	border-image : linear-gradient(to right, #000, #ccc) 1;
-}
-
- .balafon {
-            display: flex;
-		flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .bf-key {
-            width: 60px;
-            height: 200px;
-            background-color: #8b4513;
-            border: 2px solid #654321;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-
-
-        .play-balafon {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #6a994e;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
- .oboe {
-            position: relative;
-            width: 50px;
-            height: 250px;
-            background-color: brown;
-            border-radius: 20px;
-        }
-
-        .oboe-body {
-            position: absolute;
-            top: 25px;
-            left: 25%;
-            width: 50%;
-            height: 80%;
-            background-color: sienna;
-            border-radius: 10px;
-        }
-
-        .oboe-keys {
-            position: absolute;
-            top: 50px;
-            left: 0;
-            right: 0;
-            margin: auto;
-            width: 10px;
-            height: 10px;
-            background-color: silver;
-            border-radius: 50%;
-            box-shadow: 0 0 0 10px silver, 0 0 0 20px silver, 0 0 0 30px silver;
-        }
-
-        .oboe-bell {
-            position: absolute;
-            bottom: 0;
-            left: 10%;
-            width: 80%;
-            height: 25px;
-            background-color: sienna;
-            border-bottom-left-radius: 50px;
-            border-bottom-right-radius: 50px;
-        }
-
-
-        .switch {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-   .tablas {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            padding: 50px;
-        }
-
-        .dayan, .bayan {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 50%;
-            background: radial-gradient(circle, lightgray 0%, gray 80%);
-            box-shadow: inset 0 0 10px #000, 0 0 20px #000;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .dayan {
-            width: 150px;
-            height: 150px;
-        }
-
-        .bayan {
-            width: 200px;
-            height: 200px;
-        }
-
-        .play-tabla {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-.bansuri {
-            position: relative;
-width: 400px;
-height: 20px;
-background-color: #8B4513;
-border-radius: 10px;
-display: flex;
-flex-direction: row;
-justify-content: space-around;
-padding: 5px 20px;
-        }
-
-        .bansuri-key {
-            width: 16px;
-            height: 16px;
-            background-color: #fff;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .bansuri-key:active {
-            background-color: #ddd; /* Simulate pressing a key */
-        }
-
-.active {
-		transform: rotateX(-20deg) translateZ(-15px);
-	}
-
-canvas {
-	height: 200px;
-	width: 100%;
-	border: 1px solid #000;
-}
-.canvas-parent {
-	display: inline-block;
-	width: 49%;
-}
-footer {
-	margin-top: 5vh;
-	padding: 5vh 5vw;
-}
-header {
-	margin-bottom: 5vh;
-	padding: 5vh 5vw;
-}
-button {
-	padding: 1vw;
-	background: none;
-}
-#slider-container {
-	display: flex;
-	padding: 1em;
-	border: 1px solid #000;
-	align-items: center;
-	gap: 0.5em;
-	flex-wrap: wrap;
-}
-#gl_viz, #spectra, #wave {
-	position: sticky;
-	top: 50px;
-	z-index: 3;
-}
-#glCanvas {
-
-            height: 60vh;
-            width: 60%;
-		margin: 0 20%;
-        }
-
-@media (max-width: 600px) {
-
-#glCanvas {
-
-            height: 80vh;
-            width: 100%;
-		margin: 0;
-
-}
-
-}
-
-
-</style>
+	<link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header><h1>Audio Experiment</h1></header>
@@ -328,15 +59,15 @@ button {
 	<section id="percuss" style="display: flex;">
 		<div id="drums" class="drums"></div>
 		<div class="balafon">
-</div>
-	<div class="tablas">
-    <div class="dayan">Dayan</div>
-    <div class="bayan">Bayan</div>
-</div>
+		</div>
+		<div class="tablas">
+		    <div class="dayan">Dayan</div>
+		    <div class="bayan">Bayan</div>
+		</div>
 	</section>
 	<section id="wind">
-<div class="bansuri">
-</div>
+		<div class="bansuri">
+		</div>
 	</section>
 	<section id="str" style="display: flex;">
 		<div id="strings" class="strings"></div>
@@ -435,7 +166,9 @@ const opac = Math.random();
 function setRandomGlowBoxShadow() {
   const randomColor = getRandomRgbColor();
 window.currentTheme = randomColor;
-  const cssRule = `.glow {
+  const cssRule = `
+	:root { --theme: ${randomColor}; }
+	.glow {
     -webkit-box-shadow: 0px 0px 12px 8px ${randomColor};
     -moz-box-shadow: 0px 0px 12px 8px ${randomColor};
     box-shadow: 0px 0px 12px 8px ${randomColor};
@@ -459,8 +192,8 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 		const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
 		if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
 		if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
-		if (type == 'bala') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
-		if (type == 'tabla') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
+		if (type == 'bala') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
+		if (type == 'tabla') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
 		if (type == 'bansuri') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
 		return vals
 	}

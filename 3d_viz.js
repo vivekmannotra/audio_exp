@@ -24,14 +24,14 @@ export default class SoundViz {
 	
 	this.axesVertices = new Float32Array([
     // X-axis (red)
-    -1.0, 0.0, 0.0,
-    1.0, 0.0, 0.0,
+    -2.0, 0.0, 0.0,
+    2.0, 0.0, 0.0,
     // Y-axis (green)
-    0.0, -1.0, 0.0,
-    0.0, 1.0, 0.0,
+    0.0, -2.0, 0.0,
+    0.0, 2.0, 0.0,
     // Z-axis (blue)
-    0.0, 0.0, -1.0,
-    0.0, 0.0, 1.0
+    0.0, 0.0, -2.0,
+    0.0, 0.0, 2.0
 ]);
 
 this.axesColors = new Float32Array([
