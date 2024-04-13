@@ -83,7 +83,7 @@
 			<button id="btn_e">Clear</button>
 		</div>
 		<div id="info"></div>
-      
+
 	<h2>Tape Maker</h2>
 		<div id="slider-container">
 <h3>Left Channel</h3>
@@ -181,13 +181,11 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
   document.head.appendChild(styleElement);
 }
 
-	const notes = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00];
-
-	const drums = [42, 64, 95, 112, 130, 154];
 	const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
-	const strings = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534];
 	const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
-        const makeADSR = (type, def, index) => {
+	const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0.9, 0, 0]];
+
+    const makeADSR = (type, def, index) => {
 		const vals = JSON.parse(JSON.stringify(def));
 		const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
 		if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
@@ -197,19 +195,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 		if (type == 'bansuri') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
 		return vals
 	}
-	const soundDefinitions = {
-            'example_sound':  notes.map(n => {  return [[n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]], [n, [0, 1, 0.4, 0.2, 0.1], [0,0,0,0,0], [0.01, 0.1, 0.7, 0.2]] ] }),
-		'drumSounds': drums.map((d, i) => { return [ `f${d}`, [[d].concat(makeADSR('drum', d_def,i)),[d].concat(makeADSR('drum', d_def,i))]] }),
-		'stringSounds': strings.map((s, i) => { return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]] }),
-		"balafon": [185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33].map((s,i) => {
-				return [ `b${s}`, [[s].concat(makeADSR('bala', [],i)), [s].concat(makeADSR('bala', [],i))]]
-				}),
-  		"tabla": {
-		    "dayan": [246.94, 261.63, 277.18, 293.66].map((s,i)=>{ return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]] }),
-		    "bayan": [110.00, 116.54].map((s,i)=>{ return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]] })
-		  },
-		  "bansuri": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25].map((s,i)=>{ return [`b${s}`, [[s].concat(makeADSR('bansuri',[],i)), [s].concat(makeADSR('bansuri',[],i))]] }) 
-        };
+	const soundDefinitions = {};
 
 
 	const left_fviz = document.getElementById('left_f_visualizer');
@@ -217,15 +203,38 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 	const left_wviz = document.getElementById('left_w_visualizer');
 	const right_wviz = document.getElementById('right_w_visualizer');
 	setRandomGlowBoxShadow();
+    document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
 
-
-
-        document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
-
+    function makeSound() {
+        soundDefinitions.example_sound = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00].map(n => {
+            return [[n].concat(p_def), [n].concat(p_def) ]
+        });
+        soundDefinitions.drumSounds = [42, 64, 95, 112, 130, 154].map((d, i) => {
+                return [ `f${d}`, [[d].concat(makeADSR('drum', d_def,i)),[d].concat(makeADSR('drum', d_def,i))]]
+        });
+        soundDefinitions.stringSounds = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534].map((s, i) => {
+            return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]]
+        });
+        soundDefinitions.balafon = [185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33].map((s,i) => {
+                    return [ `b${s}`, [[s].concat(makeADSR('bala', [],i)), [s].concat(makeADSR('bala', [],i))]]
+                });
+        soundDefinitions.tabla = {
+            "dayan": [246.94, 261.63, 277.18, 293.66].map((s,i)=>{
+                return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]]
+            }),
+            "bayan": [110.00, 116.54].map((s,i)=>{
+                return [`t${s}`, [[s].concat(makeADSR('tabla',[],i)), [s].concat(makeADSR('tabla',[],i))]]
+            })
+        };
+        soundDefinitions.bansuri = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25].map((s,i)=>{
+            return [`b${s}`, [[s].concat(makeADSR('bansuri',[],i)), [s].concat(makeADSR('bansuri',[],i))]]
+        });
+    }
+    makeSound();
         function playSoundA() {
             try {
-		let input = document.querySelector("#inp_a").value;
-		console.log(input);
+		        let input = document.querySelector("#inp_a").value;
+		        console.log(input);
                 const dataArray = JSON.parse(input);
                 window.soundEngine.playSoundFromArray(dataArray)
                 document.querySelector("#info").innerHTML = '';
@@ -236,15 +245,15 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 
         document.querySelector("#btn_a").addEventListener("click", playSoundA);
         document.querySelector("#btn_b").addEventListener("click", () => { window.soundEngine.pause() });
-        document.querySelector("#btn_c").addEventListener("click", () => { 
-		window.soundEngine.stop();
-		document.querySelector("#inp_a").value = JSON.stringify(window.soundEngine.recordedData);
-	});
+        document.querySelector("#btn_c").addEventListener("click", () => {
+            window.soundEngine.stop();
+            document.querySelector("#inp_a").value = JSON.stringify(window.soundEngine.recordedData);
+        });
         document.querySelector("#btn_d").addEventListener("click", () => { window.soundEngine.record() });
-        document.querySelector("#btn_e").addEventListener("click", () => { 
-		document.querySelector("#inp_a").value = ''; 
-		document.querySelector("#info").innerHTML = '';
-	});
+        document.querySelector("#btn_e").addEventListener("click", () => {
+            document.querySelector("#inp_a").value = '';
+            document.querySelector("#info").innerHTML = '';
+        });
 	window.addEventListener("load", function () {
 
 function calculateFrequency(noteIndex) {
@@ -261,25 +270,25 @@ function playNote(noteIndex, key) {
 	const fundamentalFrequency = frequency;
 	if (window.refSound) {
 	const fftSize = window.refSound.fftResult.length;
-const harmonics = calculateHarmonics(fundamentalFrequency, 12); 
-const sampleRate = window.refSound.sampleRate;
-const harmonicData = harmonics.map(harmonicFreq => 
-    getMagnitudeAndPhaseFromFFT(window.refSound.fftResult, harmonicFreq, fftSize, sampleRate)
-).filter(data => data); 
+    const harmonics = calculateHarmonics(fundamentalFrequency, 12);
+    const sampleRate = window.refSound.sampleRate;
+    const harmonicData = harmonics.map(harmonicFreq =>
+        getMagnitudeAndPhaseFromFFT(window.refSound.fftResult, harmonicFreq, fftSize, sampleRate)
+    ).filter(data => data);
 
-console.log(harmonicData);
-document.querySelector("#piano_real").value = JSON.stringify(harmonicData.map(hd => hd.coefs.re));
-document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd => hd.coefs.im));
+    console.log(harmonicData);
+    document.querySelector("#piano_real").value = JSON.stringify(harmonicData.map(hd => hd.coefs.re));
+    document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd => hd.coefs.im));
 }
 
-    const imaginary = document.querySelector("#piano_imag").value ? JSON.parse(document.querySelector("#piano_imag").value) : [0,0.5,0.5, 0.5, 0];
-    const ADSR = document.querySelector("#piano_adsr").value ? JSON.parse(document.querySelector("#piano_adsr").value) : [0.01, 0.9, 0, 0];
-    const note = document.querySelector("#piano_real").value ? JSON.parse(document.querySelector("#piano_real").value) : [0, 1, 0.4, 0.2, 0.1];
+    const imaginary = document.querySelector("#piano_imag").value ? JSON.parse(document.querySelector("#piano_imag").value) : p_def[1];
+    const ADSR = document.querySelector("#piano_adsr").value ? JSON.parse(document.querySelector("#piano_adsr").value) : p_def[2];
+    const note = document.querySelector("#piano_real").value ? JSON.parse(document.querySelector("#piano_real").value) : p_def[0];
 
-    
+
     const soundData = [
-        [frequency , note, imaginary, ADSR], 
-        [frequency , note, imaginary, ADSR]  
+        [frequency , note, imaginary, ADSR],
+        [frequency , note, imaginary, ADSR]
     ];
 
     window.soundEngine.playSoundFromArray([soundData]);
@@ -333,7 +342,7 @@ for (let i = (44 - marker); i < (44 + marker); i++) {
     const noteIndex = i % 12;
     const note = notes[noteIndex] + octave;
     const isBlack = note.includes('#');
-    
+
     if (noteIndex === 0 && i !== 0) {
         octave++;
     }
@@ -361,7 +370,7 @@ for (let i = (44 - marker); i < (44 + marker); i++) {
 	});
 
     if (isBlack) {
-       
+
         piano.appendChild(keyDiv);
     }
 }
@@ -441,7 +450,7 @@ function setupPointerEventsForInstrument(selector, playSoundFunction) {
         ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
             element.addEventListener(type, (event) => {
                 isPointerDown = false;
-                playSoundFunction(element.getAttribute('data-sound'), false, event); 
+                playSoundFunction(element.getAttribute('data-sound'), false, event);
 		element.classList.remove("active");
 
             });
@@ -487,7 +496,7 @@ function addToTape() {
 	} else {
 		document.querySelector("#inp_a").value = JSON.stringify([tape]);
 	}
-	
+
 
 }
 document.querySelector("#add_tape").addEventListener('click', addToTape)
@@ -500,7 +509,7 @@ function updateProgressBar(audioSource, audioCtx) {
         const progressPercentage = (currentTime / duration) * 100;
 	progressBar.style.width = progressPercentage + "%";
 	progressBar.style['background-color'] = window.currentTheme;
-	progressBar.innerHTML = `<p><strong>${currentTime.toFixed(2)}/${duration.toFixed(2)}</strong></p>`        
+	progressBar.innerHTML = `<p><strong>${currentTime.toFixed(2)}/${duration.toFixed(2)}</strong></p>`
         if (currentTime <= duration) {
             requestAnimationFrame(() => updateProgressBar(audioSource, audioCtx));
         }
@@ -526,15 +535,15 @@ document.getElementById('audioInput').addEventListener('change', function(event)
 		const sampleRate = audioBuffer.sampleRate;
 		 const analyserLeft = audioFileCtx.createAnalyser();
 	    const analyserRight = audioFileCtx.createAnalyser();
-		const splitter = audioFileCtx.createChannelSplitter(2); 
+		const splitter = audioFileCtx.createChannelSplitter(2);
 		const source = audioFileCtx.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(splitter);
 		splitter.connect(analyserLeft, 0, 0);
-	    splitter.connect(analyserRight, 1, 0); 
+	    splitter.connect(analyserRight, 1, 0);
 
-            analyserLeft.connect(audioFileCtx.destination); 
-            analyserRight.connect(audioFileCtx.destination); 
+            analyserLeft.connect(audioFileCtx.destination);
+            analyserRight.connect(audioFileCtx.destination);
             source.start();
 
            analyserLeft.fftSize = 2048;
@@ -550,8 +559,8 @@ document.getElementById('audioInput').addEventListener('change', function(event)
     	analyserRight.getByteFrequencyData(dataArrayRight);
     	analyserLeft.getByteTimeDomainData(dataArrayWLeft);
     	analyserRight.getByteTimeDomainData(dataArrayWRight);
-	
-    	
+
+
 		const canvasContextL = setupCanvas(left_fviz);
 		const canvasContextR = setupCanvas(right_fviz);
 		const canvasContextWL = setupCanvas(left_wviz);
@@ -568,19 +577,19 @@ document.getElementById('audioInput').addEventListener('change', function(event)
 	if (document.querySelector("#analyse_file").checked) {
 		analyseSound(audioBuffer, sampleRate);
 	}
-	
-            
+
+
         }, function(e){ console.log("Error with decoding audio data" + e.err); });
     };
 
-    reader.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
+    reader.readAsArrayBuffer(file);
 });
 
 
 
 	});
 function analyseSound (audioBuffer, sampleRate) {
-	const audioData = audioBuffer.getChannelData(0); 
+	const audioData = audioBuffer.getChannelData(0);
 const complexData = Array.from(audioData).map(re => ({ re, im: 0 }));
 const fft = new window.SM.FFT();
 const fftResult = fft.transform(complexData);
@@ -588,19 +597,19 @@ const magnitudes = fftResult.map(c => Math.sqrt(c.re ** 2 + c.im ** 2));
 const phases = fftResult.map(c => Math.atan2(c.im, c.re));
 window.refSound = {
 	fftResult,
-	sampleRate	
+	sampleRate
 }
 document.querySelector("#file_stats").innerHTML = JSON.stringify(window.refSound);
 
 }
 function calculateHarmonics(frequency, numHarmonics) {
     let harmonics = [];
-    
+
     // Calculate harmonics up
     for (let n = 1; n <= numHarmonics; n++) {
         harmonics.push(frequency * n);
     }
-    
+
     // Calculate octaves down (excluding the fundamental frequency itself)
     for (let n = 1; n <= numHarmonics; n++) {
         let octaveDown = frequency / Math.pow(2, n);
@@ -628,7 +637,7 @@ const coefs = {re: bin.re, im:bin.im};
 }
 
 
-	
+
     </script>
 </body>
 </html>
