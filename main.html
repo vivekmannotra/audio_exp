@@ -181,31 +181,31 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
   document.head.appendChild(styleElement);
 }
 
+	const soundDefinitions = {};
 	const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
 	const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
 	const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0.9, 0, 0]];
-
-    const makeADSR = (type, def, index) => {
-		const vals = JSON.parse(JSON.stringify(def));
-		const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
-		if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
-		if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
-		if (type == 'bala') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
-		if (type == 'tabla') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
-		if (type == 'bansuri') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
-		return vals
-	}
-	const soundDefinitions = {};
-
 
 	const left_fviz = document.getElementById('left_f_visualizer');
 	const right_fviz = document.getElementById('right_f_visualizer');
 	const left_wviz = document.getElementById('left_w_visualizer');
 	const right_wviz = document.getElementById('right_w_visualizer');
 	setRandomGlowBoxShadow();
-    document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
+
 
     function makeSound() {
+
+		const makeADSR = (type, def, index) => {
+			const vals = JSON.parse(JSON.stringify(def));
+			const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
+			if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+			if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+			if (type == 'bala') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
+			if (type == 'tabla') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
+			if (type == 'bansuri') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
+			return vals
+		}
+
         soundDefinitions.example_sound = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00].map(n => {
             return [[n].concat(p_def), [n].concat(p_def) ]
         });
@@ -229,6 +229,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
         soundDefinitions.bansuri = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25].map((s,i)=>{
             return [`b${s}`, [[s].concat(makeADSR('bansuri',[],i)), [s].concat(makeADSR('bansuri',[],i))]]
         });
+		document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
     }
     makeSound();
         function playSoundA() {
@@ -269,17 +270,17 @@ function playNote(noteIndex, key) {
 
 	const fundamentalFrequency = frequency;
 	if (window.refSound) {
-	const fftSize = window.refSound.fftResult.length;
-    const harmonics = calculateHarmonics(fundamentalFrequency, 12);
-    const sampleRate = window.refSound.sampleRate;
-    const harmonicData = harmonics.map(harmonicFreq =>
-        getMagnitudeAndPhaseFromFFT(window.refSound.fftResult, harmonicFreq, fftSize, sampleRate)
-    ).filter(data => data);
+		const fftSize = window.refSound.fftResult.length;
+		const harmonics = calculateHarmonics(fundamentalFrequency, 12);
+		const sampleRate = window.refSound.sampleRate;
+		const harmonicData = harmonics.map(harmonicFreq =>
+			getMagnitudeAndPhaseFromFFT(window.refSound.fftResult, harmonicFreq, fftSize, sampleRate)
+		).filter(data => data);
 
-    console.log(harmonicData);
-    document.querySelector("#piano_real").value = JSON.stringify(harmonicData.map(hd => hd.coefs.re));
-    document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd => hd.coefs.im));
-}
+		console.log(harmonicData);
+		document.querySelector("#piano_real").value = JSON.stringify(harmonicData.map(hd => hd.coefs.re));
+		document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd => hd.coefs.im));
+	}
 
     const imaginary = document.querySelector("#piano_imag").value ? JSON.parse(document.querySelector("#piano_imag").value) : p_def[1];
     const ADSR = document.querySelector("#piano_adsr").value ? JSON.parse(document.querySelector("#piano_adsr").value) : p_def[2];
@@ -325,97 +326,97 @@ function playWindSound(soundName, bool, event) {
 function makePiano (keys=88) {
 
 	const piano = document.getElementById('piano');
-const baseKeyWidth = 20;
+	const baseKeyWidth = 20;
 	const screen = window.innerWidth || window.screen.availWidth;
 	const size = (screen/baseKeyWidth)*(7/5);
 	if (size < keys) keys = size;
 
-const whiteKeyWidth = baseKeyWidth + 'px';
-const blackKeyWidth = Math.floor(baseKeyWidth * 0.6) + 'px';
-const whiteKeyHeight = '100px';
-const blackKeyHeight = '60px';
+	const whiteKeyWidth = baseKeyWidth + 'px';
+	const blackKeyWidth = Math.floor(baseKeyWidth * 0.6) + 'px';
+	const whiteKeyHeight = '100px';
+	const blackKeyHeight = '60px';
 
-const notes = [ 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
-let octave = 0;
-const marker = Math.floor(keys/2);
-for (let i = (44 - marker); i < (44 + marker); i++) {
-    const noteIndex = i % 12;
-    const note = notes[noteIndex] + octave;
-    const isBlack = note.includes('#');
+	const notes = [ 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+	let octave = 0;
+	const marker = Math.floor(keys/2);
+	for (let i = (44 - marker); i < (44 + marker); i++) {
+		const noteIndex = i % 12;
+		const note = notes[noteIndex] + octave;
+		const isBlack = note.includes('#');
 
-    if (noteIndex === 0 && i !== 0) {
-        octave++;
-    }
+		if (noteIndex === 0 && i !== 0) {
+			octave++;
+		}
 
-    const keyDiv = document.createElement('div');
-    keyDiv.className = 'key ' + (isBlack ? 'black-key' : 'white-key');
-    keyDiv.setAttribute('data-sound', i);
-    keyDiv.style = `background-color: ${isBlack ? '#000' : '#fff'}; width: ${isBlack ? blackKeyWidth : whiteKeyWidth}; height: ${isBlack ? blackKeyHeight : whiteKeyHeight}; position: ${isBlack ? 'absolute' : 'relative'}; border: 1px solid #000;`;
+		const keyDiv = document.createElement('div');
+		keyDiv.className = 'key ' + (isBlack ? 'black-key' : 'white-key');
+		keyDiv.setAttribute('data-sound', i);
+		keyDiv.style = `background-color: ${isBlack ? '#000' : '#fff'}; width: ${isBlack ? blackKeyWidth : whiteKeyWidth}; height: ${isBlack ? blackKeyHeight : whiteKeyHeight}; position: ${isBlack ? 'absolute' : 'relative'}; border: 1px solid #000;`;
 
-    if (isBlack) {
-        const lastWhiteKey = piano.querySelectorAll('.white-key:last-of-type')[0];
-        const offset = baseKeyWidth * 0.7;
-        keyDiv.style.left = `${lastWhiteKey.offsetLeft + offset}px`;
-        keyDiv.style.zIndex = '2';
-    } else {
-	keyDiv.innerHTML = `<span class="key-tag">${i+1}</span>`;
-        piano.appendChild(keyDiv);
-    }
+		if (isBlack) {
+			const lastWhiteKey = piano.querySelectorAll('.white-key:last-of-type')[0];
+			const offset = baseKeyWidth * 0.7;
+			keyDiv.style.left = `${lastWhiteKey.offsetLeft + offset}px`;
+			keyDiv.style.zIndex = '2';
+		} else {
+		keyDiv.innerHTML = `<span class="key-tag">${i+1}</span>`;
+			piano.appendChild(keyDiv);
+		}
 
-    keyDiv.addEventListener('click', function(event) {
-		event.target.classList.add("active");
+		keyDiv.addEventListener('click', function(event) {
+			event.target.classList.add("active");
 
-   	 playNote(i, event.target);
-		event.target.classList.remove("active");
-	});
+		 playNote(i, event.target);
+			event.target.classList.remove("active");
+		});
 
-    if (isBlack) {
+		if (isBlack) {
 
-        piano.appendChild(keyDiv);
-    }
-}
+			piano.appendChild(keyDiv);
+		}
+	}
 }
 
 function makeDrums () {
 	const drumsContainer = document.getElementById('drums');
 
-soundDefinitions.drumSounds.forEach(ds => {
-    const drumDiv = document.createElement('div');
-    drumDiv.className = 'drum';
-    drumDiv.setAttribute('data-sound', ds[0]);
-    drumDiv.textContent = ds[0];
-    drumsContainer.appendChild(drumDiv);
-});
+	soundDefinitions.drumSounds.forEach(ds => {
+		const drumDiv = document.createElement('div');
+		drumDiv.className = 'drum';
+		drumDiv.setAttribute('data-sound', ds[0]);
+		drumDiv.textContent = ds[0];
+		drumsContainer.appendChild(drumDiv);
+	});
 
-const tablaContainer = document.getElementById('drums');
-	const dayan = document.querySelector(".dayan");
-	dayan.setAttribute('data-sound', soundDefinitions.tabla.dayan[0][0])
-	const bayan = document.querySelector(".bayan");
-	bayan.setAttribute('data-sound', soundDefinitions.tabla.bayan[0][0]);
+	const tablaContainer = document.getElementById('drums');
+		const dayan = document.querySelector(".dayan");
+		dayan.setAttribute('data-sound', soundDefinitions.tabla.dayan[0][0])
+		const bayan = document.querySelector(".bayan");
+		bayan.setAttribute('data-sound', soundDefinitions.tabla.bayan[0][0]);
 
-const balafonContainer = document.querySelector('.balafon');
+	const balafonContainer = document.querySelector('.balafon');
 
-soundDefinitions.balafon.forEach((ds, i) => {
-    const balaDiv = document.createElement('div');
-    balaDiv.className = 'bf-key';
-    balaDiv.setAttribute('data-sound', ds[0]);
-    balaDiv.textContent = ds[0];
-	balaDiv.style.height = 60 + (i*10) + 'px';
-    balafonContainer.appendChild(balaDiv);
-});
+	soundDefinitions.balafon.forEach((ds, i) => {
+		const balaDiv = document.createElement('div');
+		balaDiv.className = 'bf-key';
+		balaDiv.setAttribute('data-sound', ds[0]);
+		balaDiv.textContent = ds[0];
+		balaDiv.style.height = 60 + (i*10) + 'px';
+		balafonContainer.appendChild(balaDiv);
+	});
 
 }
 
 function makeStrings() {
 	const stringsContainer = document.getElementById('strings');
 
-soundDefinitions.stringSounds.forEach((ss, index) => {
-    const stringDiv = document.createElement('div');
-	stringDiv.className = 'string';
-	stringDiv.setAttribute('data-sound', ss[0]);
-	stringDiv.style["border-width"] = `0 0 ${5 - (index/2)}px 0`;
-	stringsContainer.appendChild(stringDiv);
-});
+	soundDefinitions.stringSounds.forEach((ss, index) => {
+		const stringDiv = document.createElement('div');
+		stringDiv.className = 'string';
+		stringDiv.setAttribute('data-sound', ss[0]);
+		stringDiv.style["border-width"] = `0 0 ${5 - (index/2)}px 0`;
+		stringsContainer.appendChild(stringDiv);
+	});
 }
 
 function makeWinds() {

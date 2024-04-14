@@ -195,8 +195,8 @@ if (error !== this.gl.NO_ERROR) {
 }
     }
 
-startVisualizationLoop(analyser, maxIterations = 100) {
-	this.resetCamera();
+startVisualizationLoop(analyser, maxIterations = 100, panValue) {
+
     let iterationCount = 0;
 	this.frequencyPositions = [];
 	this.waveformPositions = [];
@@ -206,7 +206,7 @@ startVisualizationLoop(analyser, maxIterations = 100) {
     const drawLoop = () => {
         
         if (iterationCount <= maxIterations) {
-            this.updatePositionsFromAudio(analyser);
+            this.updatePositionsFromAudio(analyser, panValue);
         	iterationCount++; 
         	requestAnimationFrame(drawLoop);
         }
@@ -217,10 +217,10 @@ startVisualizationLoop(analyser, maxIterations = 100) {
 }
 
 
-	updatePositionsFromAudio(analyser) {
+	updatePositionsFromAudio(analyser, panValue) {
 	let positions = [];
-	positions  = positions.concat(this.updateFrequencyPositions(analyser));
-	positions  = positions.concat(this.updateWaveformPositions(analyser));
+	positions  = positions.concat(this.updateFrequencyPositions(analyser, panValue));
+	positions  = positions.concat(this.updateWaveformPositions(analyser, panValue));
 
 //freq.forEach((value, index) => { positions.push(-1*index/freq.length);    positions.push(-1*value/peakF);    positions.push(0); }); 
 //wave.forEach((value, index) => { positions.push(-1*index/wave.length);    positions.push(-1*value/peakW);    positions.push(0); }); 
@@ -229,7 +229,7 @@ startVisualizationLoop(analyser, maxIterations = 100) {
 
 }
 	
-updateFrequencyPositions(analyser) {
+updateFrequencyPositions(analyser, panValue) {
     const freq = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(freq);
 
@@ -247,7 +247,7 @@ updateFrequencyPositions(analyser) {
     const maxHeight = 1;
 
     for (let i = 0; i < freq.length; i++) {
-        const x = this.currentFreqTimeStep;
+        const x = panValue*this.currentFreqTimeStep;
         const y = i == 0 ? i : (i/1000);
         const z = (freq[i] / peakF) * maxHeight; 
 
@@ -258,7 +258,7 @@ updateFrequencyPositions(analyser) {
 }
 
 
-updateWaveformPositions(analyser) {
+updateWaveformPositions(analyser, panValue) {
     const wave = new Uint8Array(analyser.fftSize);
     analyser.getByteTimeDomainData(wave);
 
@@ -275,10 +275,10 @@ updateWaveformPositions(analyser) {
 
     const maxHeight = 1;
     for (let i = 0; i < wave.length; i++) {
-        const x = -1*this.currentWaveTimeStep;
-        const y = -1*(wave[i] / peakW) * maxHeight; 
-        const z = 0;
-        this.waveformPositions.push(x, y, ((wave .length/2) - i)/1000); 
+        const x = panValue*this.currentWaveTimeStep;
+        const y = -1*(wave[i] / peakW) * maxHeight;
+        const z = ((wave .length/2)*-1 - i)/1000;
+        this.waveformPositions.push(x, y, z);
     }
 
 	return  this.waveformPositions;
@@ -313,7 +313,7 @@ updateWaveformPositions(analyser) {
     }
 
 	resetCamera() {
-		this.cameraAngleX = -3* Math.PI/4;
+		this.cameraAngleX = -1* Math.PI/4;
 		this.cameraAngleY = -1* Math.PI/4;
 		this.updateModelViewMatrix();
 		    this.draw();
