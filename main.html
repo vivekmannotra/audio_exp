@@ -184,7 +184,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 	const soundDefinitions = {};
 	const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
 	const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
-	const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0.9, 0, 0]];
+	const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0, 0.9, 0]];
 
 	const left_fviz = document.getElementById('left_f_visualizer');
 	const right_fviz = document.getElementById('right_f_visualizer');
@@ -198,7 +198,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 		const makeADSR = (type, def, index) => {
 			const vals = JSON.parse(JSON.stringify(def));
 			const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
-			if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
+			if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/10000)), vals[2][1], vals[2][2], vals[2][3]];
 			if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
 			if (type == 'bala') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
 			if (type == 'tabla') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
@@ -562,17 +562,17 @@ document.getElementById('audioInput').addEventListener('change', function(event)
     	analyserRight.getByteTimeDomainData(dataArrayWRight);
 
 
-		const canvasContextL = setupCanvas(left_fviz);
-		const canvasContextR = setupCanvas(right_fviz);
-		const canvasContextWL = setupCanvas(left_wviz);
-		const canvasContextWR = setupCanvas(right_wviz);
+		const canvasContextL = window.SM.setupCanvas(left_fviz);
+		const canvasContextR = window.SM.setupCanvas(right_fviz);
+		const canvasContextWL = window.SM.setupCanvas(left_wviz);
+		const canvasContextWR = window.SM.setupCanvas(right_wviz);
 
 		let frameCount = audioBuffer.length;
 		let frameCountW = audioBuffer.length;
-		drawFrequency(left_fviz, canvasContextL, analyserLeft, dataArrayLeft, frameCount);
-		drawFrequency(right_fviz, canvasContextR, analyserRight, dataArrayRight, frameCount);
-		drawWaveform(left_wviz, canvasContextWL, analyserLeft, dataArrayWLeft, frameCountW);
-		drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
+		window.SM.drawFrequency(left_fviz, canvasContextL, analyserLeft, dataArrayLeft, frameCount);
+		window.SM.drawFrequency(right_fviz, canvasContextR, analyserRight, dataArrayRight, frameCount);
+		window.SM.drawWaveform(left_wviz, canvasContextWL, analyserLeft, dataArrayWLeft, frameCountW);
+		window.SM.drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
 		updateProgressBar(source, audioFileCtx);
 
 	if (document.querySelector("#analyse_file").checked) {
@@ -591,16 +591,18 @@ document.getElementById('audioInput').addEventListener('change', function(event)
 	});
 function analyseSound (audioBuffer, sampleRate) {
 	const audioData = audioBuffer.getChannelData(0);
-const complexData = Array.from(audioData).map(re => ({ re, im: 0 }));
-const fft = new window.SM.FFT();
-const fftResult = fft.transform(complexData);
-const magnitudes = fftResult.map(c => Math.sqrt(c.re ** 2 + c.im ** 2));
-const phases = fftResult.map(c => Math.atan2(c.im, c.re));
-window.refSound = {
-	fftResult,
-	sampleRate
-}
-document.querySelector("#file_stats").innerHTML = JSON.stringify(window.refSound);
+	const complexData = Array.from(audioData).map(re => ({ re, im: 0 }));
+	const fft = new window.SM.FFT();
+	const fftResult = fft.transform(complexData);
+	const magnitudes = fftResult.map(c => Math.sqrt(c.re ** 2 + c.im ** 2));
+	const phases = fftResult.map(c => Math.atan2(c.im, c.re));
+	window.refSound = {
+		fftResult,
+		sampleRate,
+		magnitudes,
+		phases
+	}
+	//document.querySelector("#file_stats").innerHTML = JSON.stringify(window.refSound);
 
 }
 function calculateHarmonics(frequency, numHarmonics) {

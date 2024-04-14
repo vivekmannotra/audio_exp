@@ -192,7 +192,7 @@ export class SoundEngine {
 }
 
 
-function setupCanvas(canvas) {
+export function setupCanvas(canvas) {
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     
@@ -208,7 +208,7 @@ function setupCanvas(canvas) {
     return ctx; // In case you need to work with context directly afterward
 }
 
-function drawFrequency(canvas, canvasContext, analyser, dataArray, frameCount) {
+export function drawFrequency(canvas, canvasContext, analyser, dataArray, frameCount) {
 	if (canvasContext && frameCount) {
 
 	    	analyser.getByteFrequencyData(dataArray);
@@ -241,7 +241,7 @@ const width = canvas.offsetWidth;
 }
 
 
-function drawWaveform(canvas, canvasContext, analyser, dataArray, frameCount) {
+export function drawWaveform(canvas, canvasContext, analyser, dataArray, frameCount) {
 	if (canvasContext && frameCount) {
 
     	analyser.getByteTimeDomainData(dataArray);
