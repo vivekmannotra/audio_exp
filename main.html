@@ -195,6 +195,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 	document.querySelector('#wave').style.display = 'none';
 	document.querySelector('#file_player').style.display = 'none';
 	const harmonicalDepth = 4;
+	const stereoChannels = [-1, 1];
 
     function makeSound() {
 
@@ -210,27 +211,27 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 		}
 
         soundDefinitions.example_sound = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00].map(n => {
-            return [[calculateHarmonics(n, harmonicalDepth)].concat(p_def), [calculateHarmonics(n, harmonicalDepth)].concat(p_def) ]
+            return stereoChannels.map(st => [calculateHarmonics(n, harmonicalDepth)].concat(p_def).concat([st]))
         });
         soundDefinitions.drumSounds = [42, 64, 95, 112, 130, 154].map((d, i) => {
-                return [ `f${d}`, [[calculateHarmonics(d, harmonicalDepth)].concat(makeADSR('drum', d_def,i)),[calculateHarmonics(d, harmonicalDepth)].concat(makeADSR('drum', d_def,i))]]
+                return [ `f${d}`, stereoChannels.map(st => [calculateHarmonics(d, harmonicalDepth)].concat(makeADSR('drum', d_def,i)).concat([st]))]
         });
         soundDefinitions.stringSounds = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534].map((s, i) => {
-            return [ `f${s}`, [[s].concat(makeADSR('string', s_def,i)),[s].concat(makeADSR('string', s_def,i))]]
+            return [ `f${s}`, stereoChannels.map(st => [s].concat(makeADSR('string', s_def,i)).concat([st]))]
         });
         soundDefinitions.balafon = [185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33].map((s,i) => {
-                    return [ `b${s}`, [[calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bala', [],i)), [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bala', [],i))]]
+                    return [ `b${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bala', [],i)).concat([st]))]
                 });
         soundDefinitions.tabla = {
             "dayan": [246.94, 261.63, 277.18, 293.66].map((s,i)=>{
-                return [`t${s}`, [[calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla',[],i)), [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla',[],i))]]
+                return [`t${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla', [],i)).concat([st]))]
             }),
             "bayan": [110.00, 116.54].map((s,i)=>{
-                return [`t${s}`, [[calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla',[],i)), [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla',[],i))]]
+                return [`t${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla', [],i)).concat([st]))]
             })
         };
         soundDefinitions.bansuri = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25].map((s,i)=>{
-            return [`b${s}`, [[calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bansuri',[],i)), [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bansuri',[],i))]]
+            return [`b${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bansuri', [],i)).concat([st]))]
         });
 		document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
     }
@@ -290,10 +291,7 @@ function playNote(noteIndex, key) {
     const note = document.querySelector("#piano_real").value ? JSON.parse(document.querySelector("#piano_real").value) : p_def[0];
 
 
-    const soundData = [
-        [calculateHarmonics(frequency, harmonicalDepth), note, imaginary, ADSR],
-        [calculateHarmonics(frequency, harmonicalDepth) , note, imaginary, ADSR]
-    ];
+    const soundData = stereoChannels.map(st => [calculateHarmonics(frequency, harmonicalDepth), note, imaginary, ADSR].concat([st]));
 
     window.soundEngine.playSoundFromArray([soundData]);
 

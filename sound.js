@@ -117,19 +117,19 @@ export class SoundEngine {
         }
         let startTime = this.audioContext.currentTime;
 
-        soundData.forEach(([leftData, rightData]) => {
-            this.playChannel(leftData, startTime, -1);
-        this.playChannel(rightData, startTime, 1);
-        startTime  += Math.max(leftData[3][3], rightData[3][3]) + 0.5;
-    });
+        soundData.forEach((channelData) => {
+		channelData.forEach(cd => this.playChannel(cd, startTime));
+        	startTime  += Math.max(null, channelData.map(cn => cn[3][3])) + 0.5;
+    	});
         if (this.recording) {
             soundData.forEach(sd => { this.recordedData.push(sd) });
             this.startTime += startTime;
         }
     }
 
-    playChannel(channelData, startTime, panValue) {
-        const [frequency, real, imag, adsr] = channelData;
+    playChannel(channelData, startTime) {
+        const [frequency, real, imag, adsr, panValue] = channelData;
+	if (!panValue) panValue = 0;
         //const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         const panner = this.audioContext.createStereoPanner();
@@ -183,13 +183,12 @@ export class SoundEngine {
 
     }
 
-    applyADSR(gainNode, adsr, startTime, oscillator) {
+    applyADSR(gainNode, adsr, startTime, oscillator, peakAmp=1, susAmp=1) {
         const [attack, decay, sustain, release] = adsr;
-        const sustainLevel = sustain;
         gainNode.gain.cancelScheduledValues(startTime);
         gainNode.gain.setValueAtTime(0.001, startTime);
-        gainNode.gain.linearRampToValueAtTime(1, startTime + attack);
-        gainNode.gain.linearRampToValueAtTime(sustainLevel, startTime + attack + decay);
+        gainNode.gain.linearRampToValueAtTime(peakAmp, startTime + attack);
+        gainNode.gain.linearRampToValueAtTime(susAmp, startTime + attack + decay + sustain);
         gainNode.gain.linearRampToValueAtTime(0.001, startTime + attack + decay + sustain + release);
 
     }
