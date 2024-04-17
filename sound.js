@@ -97,6 +97,18 @@ export class SoundEngine {
         this.startTime = 0;
         this.recordedData = [];
         this.isPlaying = false;
+
+        this.masterGain = this.audioContext.createGain();
+        this.masterGain.connect(this.audioContext.destination);
+
+        // Create a band-pass filter
+        this.bandPassFilter = this.audioContext.createBiquadFilter();
+        this.bandPassFilter.type = 'bandpass';
+        this.bandPassFilter.frequency.value = 1000; // Center frequency of the band-pass filter
+        this.bandPassFilter.Q.value = 1; // Quality factor controls the bandwidth of the filter
+
+        // Connect the filter to the master gain
+        this.bandPassFilter.connect(this.masterGain);
     }
 
     playSoundFromArray(soundData) {
@@ -118,41 +130,55 @@ export class SoundEngine {
 
     playChannel(channelData, startTime, panValue) {
         const [frequency, real, imag, adsr] = channelData;
-        const oscillator = this.audioContext.createOscillator();
+        //const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         const panner = this.audioContext.createStereoPanner();
         const analyser = this.audioContext.createAnalyser();
         analyser.fftSize = 1024;
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
         const dataArrayW = new Uint8Array(analyser.fftSize);
-
+	const endTime = startTime + adsr[0] + adsr[1] + adsr[2] + adsr[3];
         // Create and set the custom waveform
+       // const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
+        //oscillator.setPeriodicWave(periodicWave);
+        //oscillator.frequency.value = frequency;
+	frequency.forEach(freq => {
+        const oscillator = this.audioContext.createOscillator();
         const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
-        oscillator.setPeriodicWave(periodicWave);
-        oscillator.frequency.value = frequency;
 
-        // Apply ADSR envelope
+        oscillator.setPeriodicWave(periodicWave);
+        oscillator.frequency.setValueAtTime(freq, startTime);
+	 // Apply ADSR envelope
         this.applyADSR(gainNode, adsr, startTime, oscillator);
+
+        // Connect this oscillator to the shared gain and panner nodes
+        oscillator.connect(gainNode);
+	this.oscillators.push(oscillator);
+        // Start and stop the oscillator at defined times
+        oscillator.start(startTime);
+        oscillator.stop(endTime);
+    });
 
         // Set panner value for stereo effect
         panner.pan.setValueAtTime(panValue, startTime);
 
         // Connect and play
-        oscillator.connect(gainNode);
+        //oscillator.connect(gainNode);
+        gainNode.connect(this.bandPassFilter);
         gainNode.connect(analyser);
         analyser.connect(panner);
         panner.connect(this.audioContext.destination);
 
         const canvasContext = panValue >= 0 ? setupCanvas(right_fviz) : setupCanvas(left_fviz);
         const canvasContextW = panValue >= 0 ? setupCanvas(right_wviz) : setupCanvas(left_wviz);
-        this.oscillators.push(oscillator);
-        oscillator.start(startTime);
+        //this.oscillators.push(oscillator);
+        //oscillator.start(startTime);
         let frameCount = 400;
         let frameCountW = 400;
         if (document.querySelector("#spectra").style.display != 'none')	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
         if (document.querySelector("#wave").style.display != 'none')	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
         if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyser, 10, panValue);
-        oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
+        //oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
 
 
     }
@@ -195,16 +221,16 @@ export class SoundEngine {
 export function setupCanvas(canvas) {
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr); // Scale all drawing operations by the dpr, making them crisp
-    
+
     ctx.font = '8px Arial'; // Adjust font size as needed
     ctx.textAlign = 'left'; // Reset or set text alignment as needed
     ctx.textBaseline = 'middle'; // Adjust baseline as needed
-    
+
     return ctx; // In case you need to work with context directly afterward
 }
 
@@ -214,7 +240,7 @@ export function drawFrequency(canvas, canvasContext, analyser, dataArray, frameC
 	    	analyser.getByteFrequencyData(dataArray);
 
 	drawAxesWithLabels(canvas, canvasContext, analyser);
-    
+
 const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
     const padding = 20; // Ensure this matches with drawAxesAndLabels
@@ -234,7 +260,7 @@ const width = canvas.offsetWidth;
     }
 	frameCount--;
 	requestAnimationFrame(() => drawFrequency(canvas, canvasContext, analyser, dataArray, frameCount));
-	
+
 
 	}
 
@@ -252,7 +278,7 @@ export function drawWaveform(canvas, canvasContext, analyser, dataArray, frameCo
     const padding = 20; // Padding around the canvas
 
     const segmentWidth = (width - 2 * padding) / dataArray.length;
-        
+
         canvasContext.clearRect(padding, padding, width - 2 * padding, height - 2 * padding); // Clear the chart area
 
         canvasContext.beginPath();
@@ -271,7 +297,7 @@ export function drawWaveform(canvas, canvasContext, analyser, dataArray, frameCo
         canvasContext.stroke();
 	frameCount--;
 	requestAnimationFrame(() => drawWaveform(canvas, canvasContext, analyser, dataArray, frameCount));
-	
+
 
 	}
 }

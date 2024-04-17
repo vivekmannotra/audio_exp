@@ -21,7 +21,7 @@ export default class SoundViz {
         this.canvas.height = height;
     }	
 	this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-	
+	this.timeVizInc = 0.02;
 	this.axesVertices = new Float32Array([
     // X-axis (red)
     -2.0, 0.0, 0.0,
@@ -239,7 +239,7 @@ updateFrequencyPositions(analyser, panValue) {
     if (this.currentFreqTimeStep === undefined) {
         this.currentFreqTimeStep = 0;
     } else {
-        this.currentFreqTimeStep += 0.01;
+        this.currentFreqTimeStep += this.timeVizInc;
     }
 
     let peakF = Math.max(...freq) || 1;
@@ -268,7 +268,7 @@ updateWaveformPositions(analyser, panValue) {
     if (this.currentWaveTimeStep === undefined) {
         this.currentWaveTimeStep = 0; 
     } else {
-        this.currentWaveTimeStep += 0.01;
+        this.currentWaveTimeStep += this.timeVizInc;
     }
 
     let peakW = Math.max(...wave) || 1;
