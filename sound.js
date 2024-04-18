@@ -117,9 +117,15 @@ export class SoundEngine {
         }
         let startTime = this.audioContext.currentTime;
 
-        soundData.forEach((channelData) => {
-		channelData.forEach(cd => this.playChannel(cd, startTime));
-        	startTime  += Math.max(null, channelData.map(cn => cn[3][3])) + 0.5;
+        soundData.forEach((channels) => {
+            let durs = [];
+            channels.forEach(channelData => {
+                channelData.forEach(cd => {
+                    this.playChannel(cd, startTime);
+                    durs.push(cd[3]);
+                });
+            });
+            startTime  += Math.max(null, durs.map(d => ( d[0] + d[1] + d[2] + d[3])));
     	});
         if (this.recording) {
             soundData.forEach(sd => { this.recordedData.push(sd) });
@@ -129,56 +135,40 @@ export class SoundEngine {
 
     playChannel(channelData, startTime) {
         const [frequency, real, imag, adsr, panValue] = channelData;
-	if (!panValue) panValue = 0;
-        //const oscillator = this.audioContext.createOscillator();
+
+        const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         const panner = this.audioContext.createStereoPanner();
         const analyser = this.audioContext.createAnalyser();
         analyser.fftSize = 1024;
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
         const dataArrayW = new Uint8Array(analyser.fftSize);
-	const endTime = startTime + adsr[0] + adsr[1] + adsr[2] + adsr[3];
         // Create and set the custom waveform
-       // const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
-        //oscillator.setPeriodicWave(periodicWave);
-        //oscillator.frequency.value = frequency;
-	frequency.forEach(freq => {
-        const oscillator = this.audioContext.createOscillator();
         const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
-
         oscillator.setPeriodicWave(periodicWave);
-        oscillator.frequency.setValueAtTime(freq, startTime);
-	 // Apply ADSR envelope
-        this.applyADSR(gainNode, adsr, startTime, oscillator);
+        oscillator.frequency.value = frequency;
 
-        // Connect this oscillator to the shared gain and panner nodes
-        oscillator.connect(gainNode);
-	this.oscillators.push(oscillator);
-        // Start and stop the oscillator at defined times
-        oscillator.start(startTime);
-        oscillator.stop(endTime);
-    });
 
         // Set panner value for stereo effect
         panner.pan.setValueAtTime(panValue, startTime);
 
         // Connect and play
-        //oscillator.connect(gainNode);
-        gainNode.connect(this.bandPassFilter);
+        oscillator.connect(gainNode);
+        //gainNode.connect(this.bandPassFilter);
         gainNode.connect(analyser);
         analyser.connect(panner);
         panner.connect(this.audioContext.destination);
 
         const canvasContext = panValue >= 0 ? setupCanvas(right_fviz) : setupCanvas(left_fviz);
         const canvasContextW = panValue >= 0 ? setupCanvas(right_wviz) : setupCanvas(left_wviz);
-        //this.oscillators.push(oscillator);
-        //oscillator.start(startTime);
+        this.oscillators.push(oscillator);
+        oscillator.start(startTime);
         let frameCount = 400;
         let frameCountW = 400;
         if (document.querySelector("#spectra").style.display != 'none')	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
         if (document.querySelector("#wave").style.display != 'none')	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
         if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyser, 10, panValue);
-        //oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
+        oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
 
 
     }

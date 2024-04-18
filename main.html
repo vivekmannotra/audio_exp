@@ -50,11 +50,6 @@
 	</section>
 	<section id="keys">
 		<div id="piano" class="piano"></div>
-		<p>
-		<input type="text" id="piano_real" placeholder="Piano Real">
-		<input type="text" id="piano_imag" placeholder="Piano Imaginary">
-		<input type="text" id="piano_adsr" placeholder="Piano ADSR">
-		</p>
 	</section>
 	<section id="percuss" style="display: flex;">
 		<div id="drums" class="drums"></div>
@@ -83,45 +78,6 @@
 			<button id="btn_e">Clear</button>
 		</div>
 		<div id="info"></div>
-
-	<h2>Tape Maker</h2>
-		<div id="slider-container">
-<h3>Left Channel</h3>
-  <p>Frequency (0-22000):</p>
-  <input type="number" id="left-freq" min="0" max="22000" value="0">
-  <p>FFT Real:</p>
-  <div>
-    <input type="text" id="left-fft-real">
-  </div>
-<p>FFT Imaginary:</p>
-  <div>
-    <input type="text" id="left-fft-imag">
-  </div>
-<p>ADSR:</p>
-  <div>
-    <input type="text" id="left-adsr">
-  </div>
-</div>
-		<div id="slider-container">
-<h3>Right Channel</h3>
-  <p>Frequency (0-22000):</p>
-  <input type="number" id="right-freq" min="0" max="22000" value="0">
-  <p>FFT Real:</p>
-  <div>
-    <input type="text" id="right-fft-real">
-  </div>
-<p>FFT Imaginary:</p>
-  <div>
-    <input type="text" id="right-fft-imag">
-  </div>
-<p>ADSR:</p>
-  <div>
-    <input type="text" id="right-adsr">
-  </div>
-</div>
-<p>
-	<button id="add_tape">Add</button>
-</p>
 	</section>
     </main>
     <footer>
@@ -185,6 +141,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 	const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
 	const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
 	const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0, 0.9, 0]];
+	const t_def = [[0,1,0], [0,0,0], [0, 1, 0, 0]];
 
 	const left_fviz = document.getElementById('left_f_visualizer');
 	const right_fviz = document.getElementById('right_f_visualizer');
@@ -194,48 +151,101 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 	document.querySelector('#spectra').style.display = 'none';
 	document.querySelector('#wave').style.display = 'none';
 	document.querySelector('#file_player').style.display = 'none';
-	const harmonicalDepth = 4;
-	const stereoChannels = [-1, 1];
+	const harmonicalDepth = 2;
+	const stereoChannels = [-1, -0.5, 0, 0.5, 1];
 
-    function makeSound() {
+	function makeDynamicSounds () {
+		const baseSoundMap = {
+			example_sound: [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00],
+			drums: [42, 64, 95, 112, 130, 154],
+			strings: [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534],
+			balafon: [185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33],
+			bansuri: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25],
+			tabla: {
+				dayan: [246.94, 261.63, 277.18, 293.66],
+				bayan: [110.00, 116.54]
+			}
+		};
 
-		const makeADSR = (type, def, index) => {
-			const vals = JSON.parse(JSON.stringify(def));
+		const makeDefInstHarmonic = (def, type, i) => {
+			const decayReduction = 1.2;
+			const sustainLevelAdjustment = 0.8;
+			let temp_def = JSON.parse(JSON.stringify(def));
 			const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
-			if (type == 'drum') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/10000)), vals[2][1], vals[2][2], vals[2][3]];
-			if (type == 'string') vals[2] = [(parseFloat((vals[2][0] - curvedResponse(index))/1000)), vals[2][1], vals[2][2], vals[2][3]];
-			if (type == 'bala') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
-			if (type == 'tabla') return [[0,1,0], [0,0,0], [0, 1, 0, 0]];
-			if (type == 'bansuri') return [[0,1,0], [0,0,0], [0.2, 0, 0.5, 0]];
-			return vals
-		}
+			if (type == 'drum') temp_def[2] = [(parseFloat((temp_def[2][0] - curvedResponse(i))/10000)), temp_def[2][1], temp_def[2][2], temp_def[2][3]];
+			if (type == 'string') temp_def[2] = [(parseFloat((temp_def[2][0] - curvedResponse(i))/1000)), temp_def[2][1], temp_def[2][2], temp_def[2][3]];
+			temp_def[2][1] = temp_def[2][1] * Math.pow(decayReduction, i);
+			temp_def[2][2] = temp_def[2][1] * Math.pow(sustainLevelAdjustment, i);
+			return temp_def
+		};
 
-        soundDefinitions.example_sound = [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00].map(n => {
-            return stereoChannels.map(st => [calculateHarmonics(n, harmonicalDepth)].concat(p_def).concat([st]))
-        });
-        soundDefinitions.drumSounds = [42, 64, 95, 112, 130, 154].map((d, i) => {
-                return [ `f${d}`, stereoChannels.map(st => [calculateHarmonics(d, harmonicalDepth)].concat(makeADSR('drum', d_def,i)).concat([st]))]
-        });
-        soundDefinitions.stringSounds = [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534].map((s, i) => {
-            return [ `f${s}`, stereoChannels.map(st => [s].concat(makeADSR('string', s_def,i)).concat([st]))]
-        });
-        soundDefinitions.balafon = [185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33].map((s,i) => {
-                    return [ `b${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bala', [],i)).concat([st]))]
-                });
-        soundDefinitions.tabla = {
-            "dayan": [246.94, 261.63, 277.18, 293.66].map((s,i)=>{
-                return [`t${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla', [],i)).concat([st]))]
-            }),
-            "bayan": [110.00, 116.54].map((s,i)=>{
-                return [`t${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('tabla', [],i)).concat([st]))]
-            })
-        };
-        soundDefinitions.bansuri = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25].map((s,i)=>{
-            return [`b${s}`, stereoChannels.map(st => [calculateHarmonics(s, harmonicalDepth)].concat(makeADSR('bansuri', [],i)).concat([st]))]
-        });
+		const makeIntrumentHarmonics = (frequency, index, type, def) => {
+			let harmonics = [];
+			let harmonicDecayFactor = 0.8;
+
+			harmonics.push([frequency].concat(makeDefInstHarmonic(def, type, 0)))
+
+			for (let n = 1; n <= harmonicalDepth; n++) {
+				let harmonicFreq = frequency * (n + 1);
+				let amplitude = Math.pow(harmonicDecayFactor, n);
+				let h_def = makeDefInstHarmonic(def, type, n);
+				h_def[2].push(amplitude, 0);
+				harmonics.push([ harmonicFreq ].concat(h_def));
+			}
+
+			for (let n = 1; n <= harmonicalDepth; n++) {
+				let octaveFreq = frequency / Math.pow(2, n);
+				if (octaveFreq >= 20) {
+					let amplitude = 1 / n;
+					let h_def = makeDefInstHarmonic(def, type, n);
+					h_def[2].push(amplitude, 0);
+					harmonics.unshift([ octaveFreq ].concat(h_def));
+				}
+			}
+
+			return harmonics;
+		};
+
+		const expandIntrumentSound = (baseFrequencies, type, def) => {
+			const harmonicSound = baseFrequencies.map((f, i) => {
+				return makeIntrumentHarmonics(f, i, type, def)
+			});
+			const stereoSound = harmonicSound.map(hs => {
+				return stereoChannels.map(st => {
+					return hs.map(hss => hss.concat(st))
+				});
+			});
+			return stereoSound;
+		};
+
+		soundDefinitions.example_sound = expandIntrumentSound(baseSoundMap.example_sound, 'keys', p_def);
+		soundDefinitions.drumSounds = expandIntrumentSound(baseSoundMap.drums, 'drum', d_def).map((ds, i) => { return [`DS${i}`, ds]});
+
+		soundDefinitions.stringSounds = baseSoundMap.strings.map((ss, i) => {
+			return [ `SS${i}`, ss, function (f) {
+				return expandIntrumentSound([f], 'string', s_def)
+			}];
+		});
+
+		soundDefinitions.balafon = expandIntrumentSound(baseSoundMap.balafon, 'balafon', t_def).map((bs, i) => { return [`BS${i}`, bs]});
+		soundDefinitions.tabla = {};
+		soundDefinitions.tabla.dayan = expandIntrumentSound(baseSoundMap.tabla.dayan, 'tabla', t_def).map((ts, i) => { return [`TS${i}`, ts]});
+		soundDefinitions.tabla.bayan = expandIntrumentSound(baseSoundMap.tabla.bayan, 'tabla', t_def).map((ts, i) => { return [`TS${i}`, ts]});
+		soundDefinitions.bansuri = expandIntrumentSound(baseSoundMap.bansuri, 'bansuri', t_def).map((bs, i) => { return [`BS${i}`, bs]});
+
+		soundDefinitions.keys = function (i) {
+			return expandIntrumentSound([calculateFrequency(i)], 'keys', p_def)
+		};
+
 		document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
-    }
-    makeSound();
+	}
+	makeDynamicSounds();
+function calculateFrequency(noteIndex) {
+
+	const A4_KEY_INDEX = 48;
+	const A4_FREQUENCY = 440;
+	return Math.pow(2, (noteIndex - A4_KEY_INDEX) / 12) * A4_FREQUENCY;
+}
         function playSoundA() {
             try {
 		        let input = document.querySelector("#inp_a").value;
@@ -261,39 +271,12 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
         });
 	window.addEventListener("load", function () {
 
-function calculateFrequency(noteIndex) {
 
-    const A4_KEY_INDEX = 48;
-    const A4_FREQUENCY = 440;
-    return Math.pow(2, (noteIndex - A4_KEY_INDEX) / 12) * A4_FREQUENCY;
-}
+function playKey(noteIndex, key) {
 
-function playNote(noteIndex, key) {
+    const soundData = soundDefinitions.keys(noteIndex);
 
-    const frequency = calculateFrequency(noteIndex);
-
-	const fundamentalFrequency = frequency;
-	if (window.refSound) {
-		const fftSize = window.refSound.fftResult.length;
-		const harmonics = calculateHarmonics(fundamentalFrequency, 12);
-		const sampleRate = window.refSound.sampleRate;
-		const harmonicData = harmonics.map(harmonicFreq =>
-			getMagnitudeAndPhaseFromFFT(window.refSound.fftResult, harmonicFreq, fftSize, sampleRate)
-		).filter(data => data);
-
-		console.log(harmonicData);
-		document.querySelector("#piano_real").value = JSON.stringify(harmonicData.map(hd => hd.coefs.re));
-		document.querySelector("#piano_imag").value = JSON.stringify(harmonicData.map(hd => hd.coefs.im));
-	}
-
-    const imaginary = document.querySelector("#piano_imag").value ? JSON.parse(document.querySelector("#piano_imag").value) : p_def[1];
-    const ADSR = document.querySelector("#piano_adsr").value ? JSON.parse(document.querySelector("#piano_adsr").value) : p_def[2];
-    const note = document.querySelector("#piano_real").value ? JSON.parse(document.querySelector("#piano_real").value) : p_def[0];
-
-
-    const soundData = stereoChannels.map(st => [calculateHarmonics(frequency, harmonicalDepth), note, imaginary, ADSR].concat([st]));
-
-    window.soundEngine.playSoundFromArray([soundData]);
+    window.soundEngine.playSoundFromArray(soundData);
 
 }
 function playDrumSound(soundName) {
@@ -308,11 +291,11 @@ function playStringSound(soundName, bool, event) {
 
     const soundParams = soundDefinitions.stringSounds.find(ss => ss[0] == soundName)
     if (!soundParams) return;
-	const sound = JSON.parse(JSON.stringify(soundParams[1]));
+
 	let f_pos = (event.offsetX/event.target.clientWidth)*20;
-	const f_freq = sound[0][0] * Math.pow(2, Math.floor(f_pos) / 12);
-	sound[0][0] = sound[1][0] = calculateHarmonics(f_freq, harmonicalDepth);
-	window.soundEngine.playSoundFromArray([sound]);
+	const f_freq = soundParams[1] * Math.pow(2, Math.floor(f_pos) / 12);
+	const sound = soundParams[2](f_freq);
+	window.soundEngine.playSoundFromArray(sound);
 
 }
 
@@ -367,7 +350,7 @@ function makePiano (keys=88) {
 		keyDiv.addEventListener('click', function(event) {
 			event.target.classList.add("active");
 
-		 playNote(i, event.target);
+		 playKey(i, event.target);
 			event.target.classList.remove("active");
 		});
 
@@ -461,47 +444,12 @@ function setupPointerEventsForInstrument(selector, playSoundFunction) {
 }
 setupPointerEventsForInstrument('.drum', playDrumSound);
 setupPointerEventsForInstrument('.string', playStringSound);
-setupPointerEventsForInstrument('.key', playNote);
+setupPointerEventsForInstrument('.key', playKey);
 setupPointerEventsForInstrument('.bf-key', playDrumSound);
 setupPointerEventsForInstrument('.dayan', playDrumSound);
 setupPointerEventsForInstrument('.bayan', playDrumSound);
 setupPointerEventsForInstrument('.bansuri-key', playWindSound);
 
-function addToTape() {
-	let existing = document.querySelector("#inp_a").value;
-
-  const leftFreq = document.getElementById("left-freq");
-  const leftFFTReal = document.getElementById("left-fft-real");
-  const leftFFTImag = document.getElementById("left-fft-imag");
-  const leftADSR = document.getElementById("left-adsr");
-
-  const rightFreq = document.getElementById("right-freq");
-  const rightFFTReal = document.getElementById("right-fft-real");
-  const rightFFTImag = document.getElementById("right-fft-imag");
-  const rightADSR = document.getElementById("right-adsr");
-
-	let lftChnl, rgtChnl = [];
-	if (leftFreq.value) {
-		lftChnl = JSON.parse(`[${leftFreq.value}, [${leftFFTReal.value}], [${leftFFTImag.value}], [${leftADSR.value}]]`);
-	}
-		if (rightFreq.value) {
-		rgtChnl = JSON.parse(`[${rightFreq.value}, [${rightFFTReal.value}], [${rightFFTImag.value}], [${rightADSR.value}]]`);
-	}
-	let tape = [];
-	tape.push(lftChnl);
-	tape.push(rgtChnl);
-
-	if (existing) {
-		existing = JSON.parse(existing);
-		existing.push(tape);
-		document.querySelector("#inp_a").value = JSON.stringify(existing);
-	} else {
-		document.querySelector("#inp_a").value = JSON.stringify([tape]);
-	}
-
-
-}
-document.querySelector("#add_tape").addEventListener('click', addToTape)
 const progressBar = document.getElementById('progressBar');
 
 function updateProgressBar(audioSource, audioCtx) {
