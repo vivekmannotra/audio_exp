@@ -21,7 +21,7 @@ export default class SoundViz {
         this.canvas.height = height;
     }	
 	this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-	this.timeVizInc = 0.02;
+	this.timeVizInc = 0.01;
 	this.axesVertices = new Float32Array([
     // X-axis (red)
     -2.0, 0.0, 0.0,

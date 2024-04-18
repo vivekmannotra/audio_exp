@@ -127,6 +127,7 @@ export class SoundEngine {
             });
             startTime  += Math.max(null, durs.map(d => ( d[0] + d[1] + d[2] + d[3])));
     	});
+
         if (this.recording) {
             soundData.forEach(sd => { this.recordedData.push(sd) });
             this.startTime += startTime;
@@ -143,18 +144,17 @@ export class SoundEngine {
         analyser.fftSize = 1024;
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
         const dataArrayW = new Uint8Array(analyser.fftSize);
-        // Create and set the custom waveform
+
+
         const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
         oscillator.setPeriodicWave(periodicWave);
         oscillator.frequency.value = frequency;
 
 
-        // Set panner value for stereo effect
         panner.pan.setValueAtTime(panValue, startTime);
 
-        // Connect and play
         oscillator.connect(gainNode);
-        //gainNode.connect(this.bandPassFilter);
+        gainNode.connect(this.bandPassFilter);
         gainNode.connect(analyser);
         analyser.connect(panner);
         panner.connect(this.audioContext.destination);
@@ -163,8 +163,8 @@ export class SoundEngine {
         const canvasContextW = panValue >= 0 ? setupCanvas(right_wviz) : setupCanvas(left_wviz);
         this.oscillators.push(oscillator);
         oscillator.start(startTime);
-        let frameCount = 400;
-        let frameCountW = 400;
+        let frameCount = 100;
+        let frameCountW = 100;
         if (document.querySelector("#spectra").style.display != 'none')	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
         if (document.querySelector("#wave").style.display != 'none')	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
         if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyser, 10, panValue);

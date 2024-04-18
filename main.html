@@ -151,8 +151,8 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 	document.querySelector('#spectra').style.display = 'none';
 	document.querySelector('#wave').style.display = 'none';
 	document.querySelector('#file_player').style.display = 'none';
-	const harmonicalDepth = 2;
-	const stereoChannels = [-1, -0.5, 0, 0.5, 1];
+	const harmonicalDepth = 3;
+	const stereoChannels = [-1, 1];
 
 	function makeDynamicSounds () {
 		const baseSoundMap = {
@@ -172,8 +172,8 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 			const sustainLevelAdjustment = 0.8;
 			let temp_def = JSON.parse(JSON.stringify(def));
 			const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
-			if (type == 'drum') temp_def[2] = [(parseFloat((temp_def[2][0] - curvedResponse(i))/10000)), temp_def[2][1], temp_def[2][2], temp_def[2][3]];
-			if (type == 'string') temp_def[2] = [(parseFloat((temp_def[2][0] - curvedResponse(i))/1000)), temp_def[2][1], temp_def[2][2], temp_def[2][3]];
+			if (type == 'drum') temp_def[2][0] = (parseFloat((temp_def[2][0] - curvedResponse(i))/10000));
+			if (type == 'string') temp_def[2][0] = (parseFloat((temp_def[2][0] - curvedResponse(i))/1000));
 			temp_def[2][1] = temp_def[2][1] * Math.pow(decayReduction, i);
 			temp_def[2][2] = temp_def[2][1] * Math.pow(sustainLevelAdjustment, i);
 			return temp_def
@@ -240,304 +240,302 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 		document.querySelector("#inp_a").value = JSON.stringify(soundDefinitions['example_sound']);
 	}
 	makeDynamicSounds();
-function calculateFrequency(noteIndex) {
 
-	const A4_KEY_INDEX = 48;
-	const A4_FREQUENCY = 440;
-	return Math.pow(2, (noteIndex - A4_KEY_INDEX) / 12) * A4_FREQUENCY;
-}
-        function playSoundA() {
-            try {
-		        let input = document.querySelector("#inp_a").value;
-		        console.log(input);
-                const dataArray = JSON.parse(input);
-                window.soundEngine.playSoundFromArray(dataArray)
-                document.querySelector("#info").innerHTML = '';
-            } catch (e) {
-                document.querySelector("#info").innerHTML = `Error: ${e}`;
-            }
-        }
+	function calculateFrequency(noteIndex) {
 
-        document.querySelector("#btn_a").addEventListener("click", playSoundA);
-        document.querySelector("#btn_b").addEventListener("click", () => { window.soundEngine.pause() });
-        document.querySelector("#btn_c").addEventListener("click", () => {
-            window.soundEngine.stop();
-            document.querySelector("#inp_a").value = JSON.stringify(window.soundEngine.recordedData);
-        });
-        document.querySelector("#btn_d").addEventListener("click", () => { window.soundEngine.record() });
-        document.querySelector("#btn_e").addEventListener("click", () => {
-            document.querySelector("#inp_a").value = '';
-            document.querySelector("#info").innerHTML = '';
-        });
+		const A4_KEY_INDEX = 48;
+		const A4_FREQUENCY = 440;
+		return Math.pow(2, (noteIndex - A4_KEY_INDEX) / 12) * A4_FREQUENCY;
+	}
+	function playSoundA() {
+		try {
+			let input = document.querySelector("#inp_a").value;
+			console.log(input);
+			const dataArray = JSON.parse(input);
+			window.soundEngine.playSoundFromArray(dataArray)
+			document.querySelector("#info").innerHTML = '';
+		} catch (e) {
+			document.querySelector("#info").innerHTML = `Error: ${e}`;
+		}
+	}
+
+	document.querySelector("#btn_a").addEventListener("click", playSoundA);
+	document.querySelector("#btn_b").addEventListener("click", () => { window.soundEngine.pause() });
+	document.querySelector("#btn_c").addEventListener("click", () => {
+		window.soundEngine.stop();
+		document.querySelector("#inp_a").value = JSON.stringify(window.soundEngine.recordedData);
+	});
+	document.querySelector("#btn_d").addEventListener("click", () => { window.soundEngine.record() });
+	document.querySelector("#btn_e").addEventListener("click", () => {
+		document.querySelector("#inp_a").value = '';
+		document.querySelector("#info").innerHTML = '';
+	});
+
 	window.addEventListener("load", function () {
 
+	function playKey(noteIndex, key) {
 
-function playKey(noteIndex, key) {
+		const soundData = soundDefinitions.keys(noteIndex);
+		window.soundEngine.playSoundFromArray(soundData);
 
-    const soundData = soundDefinitions.keys(noteIndex);
-
-    window.soundEngine.playSoundFromArray(soundData);
-
-}
-function playDrumSound(soundName) {
-    let soundParams = soundDefinitions.drumSounds.find(ds => ds[0] == soundName);
-    if (!soundParams) soundParams = soundDefinitions.balafon.find(ds => ds[0] == soundName);
-    if (!soundParams) soundParams = soundDefinitions.tabla.dayan.find(ds => ds[0] == soundName);
-    if (!soundParams) soundParams = soundDefinitions.tabla.bayan.find(ds => ds[0] == soundName);
-	window.soundEngine.playSoundFromArray([soundParams[1]]);
-}
-
-function playStringSound(soundName, bool, event) {
-
-    const soundParams = soundDefinitions.stringSounds.find(ss => ss[0] == soundName)
-    if (!soundParams) return;
-
-	let f_pos = (event.offsetX/event.target.clientWidth)*20;
-	const f_freq = soundParams[1] * Math.pow(2, Math.floor(f_pos) / 12);
-	const sound = soundParams[2](f_freq);
-	window.soundEngine.playSoundFromArray(sound);
-
-}
-
-function playWindSound(soundName, bool, event) {
-
-    const soundParams = soundDefinitions.bansuri.find(ss => ss[0] == soundName)
-    if (!soundParams) return;
-	window.soundEngine.playSoundFromArray([soundParams[1]]);
-
-}
-
-function makePiano (keys=88) {
-
-	const piano = document.getElementById('piano');
-	const baseKeyWidth = 20;
-	const screen = window.innerWidth || window.screen.availWidth;
-	const size = (screen/baseKeyWidth)*(7/5);
-	if (size < keys) keys = size;
-
-	const whiteKeyWidth = baseKeyWidth + 'px';
-	const blackKeyWidth = Math.floor(baseKeyWidth * 0.6) + 'px';
-	const whiteKeyHeight = '100px';
-	const blackKeyHeight = '60px';
-
-	const notes = [ 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
-	let octave = 0;
-	const marker = Math.floor(keys/2);
-	for (let i = (44 - marker); i < (44 + marker); i++) {
-		const noteIndex = i % 12;
-		const note = notes[noteIndex] + octave;
-		const isBlack = note.includes('#');
-
-		if (noteIndex === 0 && i !== 0) {
-			octave++;
-		}
-
-		const keyDiv = document.createElement('div');
-		keyDiv.className = 'key ' + (isBlack ? 'black-key' : 'white-key');
-		keyDiv.setAttribute('data-sound', i);
-		keyDiv.style = `background-color: ${isBlack ? '#000' : '#fff'}; width: ${isBlack ? blackKeyWidth : whiteKeyWidth}; height: ${isBlack ? blackKeyHeight : whiteKeyHeight}; position: ${isBlack ? 'absolute' : 'relative'}; border: 1px solid #000;`;
-
-		if (isBlack) {
-			const lastWhiteKey = piano.querySelectorAll('.white-key:last-of-type')[0];
-			const offset = baseKeyWidth * 0.7;
-			keyDiv.style.left = `${lastWhiteKey.offsetLeft + offset}px`;
-			keyDiv.style.zIndex = '2';
-		} else {
-		keyDiv.innerHTML = `<span class="key-tag">${i+1}</span>`;
-			piano.appendChild(keyDiv);
-		}
-
-		keyDiv.addEventListener('click', function(event) {
-			event.target.classList.add("active");
-
-		 playKey(i, event.target);
-			event.target.classList.remove("active");
-		});
-
-		if (isBlack) {
-
-			piano.appendChild(keyDiv);
-		}
 	}
-}
-
-function makeDrums () {
-	const drumsContainer = document.getElementById('drums');
-
-	soundDefinitions.drumSounds.forEach(ds => {
-		const drumDiv = document.createElement('div');
-		drumDiv.className = 'drum';
-		drumDiv.setAttribute('data-sound', ds[0]);
-		drumDiv.textContent = ds[0];
-		drumsContainer.appendChild(drumDiv);
-	});
-
-	const tablaContainer = document.getElementById('drums');
-		const dayan = document.querySelector(".dayan");
-		dayan.setAttribute('data-sound', soundDefinitions.tabla.dayan[0][0])
-		const bayan = document.querySelector(".bayan");
-		bayan.setAttribute('data-sound', soundDefinitions.tabla.bayan[0][0]);
-
-	const balafonContainer = document.querySelector('.balafon');
-
-	soundDefinitions.balafon.forEach((ds, i) => {
-		const balaDiv = document.createElement('div');
-		balaDiv.className = 'bf-key';
-		balaDiv.setAttribute('data-sound', ds[0]);
-		balaDiv.textContent = ds[0];
-		balaDiv.style.height = 60 + (i*10) + 'px';
-		balafonContainer.appendChild(balaDiv);
-	});
-
-}
-
-function makeStrings() {
-	const stringsContainer = document.getElementById('strings');
-
-	soundDefinitions.stringSounds.forEach((ss, index) => {
-		const stringDiv = document.createElement('div');
-		stringDiv.className = 'string';
-		stringDiv.setAttribute('data-sound', ss[0]);
-		stringDiv.style["border-width"] = `0 0 ${5 - (index/2)}px 0`;
-		stringsContainer.appendChild(stringDiv);
-	});
-}
-
-function makeWinds() {
-	const bansuriContainer = document.querySelector('.bansuri');
-
-soundDefinitions.bansuri.forEach((ss, index) => {
-    const bansuriDiv = document.createElement('div');
-	bansuriDiv.className = 'bansuri-key';
-	bansuriDiv.setAttribute('data-sound', ss[0]);
-	bansuriDiv.style.top = `${(index+1)*50}px`;
-	bansuriContainer.appendChild(bansuriDiv);
-});
-}
-
-makePiano();
-makeDrums();
-makeStrings();
-makeWinds();
-
-
-function setupPointerEventsForInstrument(selector, playSoundFunction) {
-    let isPointerDown = false;
-
-    document.querySelectorAll(selector).forEach(element => {
-	['pointerdown'].forEach(type => {
-		element.addEventListener(type, (event) => {
-			isPointerDown = true;
-		            playSoundFunction(element.getAttribute('data-sound'), true, event);
-			element.classList.toggle("active");
-		});
-	});
-        ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
-            element.addEventListener(type, (event) => {
-                isPointerDown = false;
-                playSoundFunction(element.getAttribute('data-sound'), false, event);
-		element.classList.remove("active");
-
-            });
-        });
-    });
-}
-setupPointerEventsForInstrument('.drum', playDrumSound);
-setupPointerEventsForInstrument('.string', playStringSound);
-setupPointerEventsForInstrument('.key', playKey);
-setupPointerEventsForInstrument('.bf-key', playDrumSound);
-setupPointerEventsForInstrument('.dayan', playDrumSound);
-setupPointerEventsForInstrument('.bayan', playDrumSound);
-setupPointerEventsForInstrument('.bansuri-key', playWindSound);
-
-const progressBar = document.getElementById('progressBar');
-
-function updateProgressBar(audioSource, audioCtx) {
-    if (audioSource.buffer) {
-        const duration = audioSource.buffer.duration;
-        const currentTime = audioCtx.currentTime - (audioSource.startTime ? audioSource.startTime: 0 );
-        const progressPercentage = (currentTime / duration) * 100;
-	progressBar.style.width = progressPercentage + "%";
-	progressBar.style['background-color'] = window.currentTheme;
-	progressBar.innerHTML = `<p><strong>${currentTime.toFixed(2)}/${duration.toFixed(2)}</strong></p>`
-        if (currentTime <= duration) {
-            requestAnimationFrame(() => updateProgressBar(audioSource, audioCtx));
-        }
-    }
-}
-
-const audioFileCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-document.getElementById('audioInput').addEventListener('change', function(event) {
-    const file = event.target.files[0]; // Get the first file selected by the user
-    if (!file) {
-        console.log("No file selected!");
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = function(fileLoadEvent) {
-        const arrayBuffer = fileLoadEvent.target.result;
-
-	audioFileCtx.decodeAudioData(arrayBuffer, function(audioBuffer) {
-          	window.audioBuffer = audioBuffer;
-		const sampleRate = audioBuffer.sampleRate;
-		 const analyserLeft = audioFileCtx.createAnalyser();
-	    const analyserRight = audioFileCtx.createAnalyser();
-		const splitter = audioFileCtx.createChannelSplitter(2);
-		const source = audioFileCtx.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(splitter);
-		splitter.connect(analyserLeft, 0, 0);
-	    splitter.connect(analyserRight, 1, 0);
-
-            analyserLeft.connect(audioFileCtx.destination);
-            analyserRight.connect(audioFileCtx.destination);
-            source.start();
-
-           analyserLeft.fftSize = 2048;
-    	analyserRight.fftSize = 2048;
-    	const bufferLengthLeft = analyserLeft.frequencyBinCount;
-    	const bufferLengthRight = analyserRight.frequencyBinCount;
-    	const dataArrayLeft = new Uint8Array(bufferLengthLeft);
-    	const dataArrayRight = new Uint8Array(bufferLengthRight);
-    	const dataArrayWLeft = new Uint8Array(analyserLeft.fftSize);
-    	const dataArrayWRight = new Uint8Array(analyserRight.fftSize);
-
-    	analyserLeft.getByteFrequencyData(dataArrayLeft);
-    	analyserRight.getByteFrequencyData(dataArrayRight);
-    	analyserLeft.getByteTimeDomainData(dataArrayWLeft);
-    	analyserRight.getByteTimeDomainData(dataArrayWRight);
-
-
-		const canvasContextL = window.SM.setupCanvas(left_fviz);
-		const canvasContextR = window.SM.setupCanvas(right_fviz);
-		const canvasContextWL = window.SM.setupCanvas(left_wviz);
-		const canvasContextWR = window.SM.setupCanvas(right_wviz);
-
-		let frameCount = audioBuffer.length;
-		let frameCountW = audioBuffer.length;
-		window.SM.drawFrequency(left_fviz, canvasContextL, analyserLeft, dataArrayLeft, frameCount);
-		window.SM.drawFrequency(right_fviz, canvasContextR, analyserRight, dataArrayRight, frameCount);
-		window.SM.drawWaveform(left_wviz, canvasContextWL, analyserLeft, dataArrayWLeft, frameCountW);
-		window.SM.drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
-		updateProgressBar(source, audioFileCtx);
-
-	if (document.querySelector("#analyse_file").checked) {
-		analyseSound(audioBuffer, sampleRate);
+	function playDrumSound(soundName) {
+		let soundParams = soundDefinitions.drumSounds.find(ds => ds[0] == soundName);
+		if (!soundParams) soundParams = soundDefinitions.balafon.find(ds => ds[0] == soundName);
+		if (!soundParams) soundParams = soundDefinitions.tabla.dayan.find(ds => ds[0] == soundName);
+		if (!soundParams) soundParams = soundDefinitions.tabla.bayan.find(ds => ds[0] == soundName);
+		window.soundEngine.playSoundFromArray([soundParams[1]]);
 	}
 
+	function playStringSound(soundName, bool, event) {
 
-        }, function(e){ console.log("Error with decoding audio data" + e.err); });
-    };
+		const soundParams = soundDefinitions.stringSounds.find(ss => ss[0] == soundName)
+		if (!soundParams) return;
 
-    reader.readAsArrayBuffer(file);
-});
+		let f_pos = (event.offsetX/event.target.clientWidth)*20;
+		const f_freq = soundParams[1] * Math.pow(2, Math.floor(f_pos) / 12);
+		const sound = soundParams[2](f_freq);
+		window.soundEngine.playSoundFromArray(sound);
 
+	}
 
+	function playWindSound(soundName, bool, event) {
 
+		const soundParams = soundDefinitions.bansuri.find(ss => ss[0] == soundName)
+		if (!soundParams) return;
+		window.soundEngine.playSoundFromArray([soundParams[1]]);
+
+	}
+
+	function makePiano (keys=88) {
+
+		const piano = document.getElementById('piano');
+		const baseKeyWidth = 20;
+		const screen = window.innerWidth || window.screen.availWidth;
+		const size = (screen/baseKeyWidth)*(7/5);
+		if (size < keys) keys = size;
+
+		const whiteKeyWidth = baseKeyWidth + 'px';
+		const blackKeyWidth = Math.floor(baseKeyWidth * 0.6) + 'px';
+		const whiteKeyHeight = '100px';
+		const blackKeyHeight = '60px';
+
+		const notes = [ 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+		let octave = 0;
+		const marker = Math.floor(keys/2);
+		for (let i = (44 - marker); i < (44 + marker); i++) {
+			const noteIndex = i % 12;
+			const note = notes[noteIndex] + octave;
+			const isBlack = note.includes('#');
+
+			if (noteIndex === 0 && i !== 0) {
+				octave++;
+			}
+
+			const keyDiv = document.createElement('div');
+			keyDiv.className = 'key ' + (isBlack ? 'black-key' : 'white-key');
+			keyDiv.setAttribute('data-sound', i);
+			keyDiv.style = `background-color: ${isBlack ? '#000' : '#fff'}; width: ${isBlack ? blackKeyWidth : whiteKeyWidth}; height: ${isBlack ? blackKeyHeight : whiteKeyHeight}; position: ${isBlack ? 'absolute' : 'relative'}; border: 1px solid #000;`;
+
+			if (isBlack) {
+				const lastWhiteKey = piano.querySelectorAll('.white-key:last-of-type')[0];
+				const offset = baseKeyWidth * 0.7;
+				keyDiv.style.left = `${lastWhiteKey.offsetLeft + offset}px`;
+				keyDiv.style.zIndex = '2';
+			} else {
+			keyDiv.innerHTML = `<span class="key-tag">${i+1}</span>`;
+				piano.appendChild(keyDiv);
+			}
+
+			keyDiv.addEventListener('click', function(event) {
+				event.target.classList.add("active");
+
+			 playKey(i, event.target);
+				event.target.classList.remove("active");
+			});
+
+			if (isBlack) {
+
+				piano.appendChild(keyDiv);
+			}
+		}
+	}
+
+	function makeDrums () {
+		const drumsContainer = document.getElementById('drums');
+
+		soundDefinitions.drumSounds.forEach(ds => {
+			const drumDiv = document.createElement('div');
+			drumDiv.className = 'drum';
+			drumDiv.setAttribute('data-sound', ds[0]);
+			drumDiv.textContent = ds[0];
+			drumsContainer.appendChild(drumDiv);
+		});
+
+		const tablaContainer = document.getElementById('drums');
+			const dayan = document.querySelector(".dayan");
+			dayan.setAttribute('data-sound', soundDefinitions.tabla.dayan[0][0])
+			const bayan = document.querySelector(".bayan");
+			bayan.setAttribute('data-sound', soundDefinitions.tabla.bayan[0][0]);
+
+		const balafonContainer = document.querySelector('.balafon');
+
+		soundDefinitions.balafon.forEach((ds, i) => {
+			const balaDiv = document.createElement('div');
+			balaDiv.className = 'bf-key';
+			balaDiv.setAttribute('data-sound', ds[0]);
+			balaDiv.textContent = ds[0];
+			balaDiv.style.height = 60 + (i*10) + 'px';
+			balafonContainer.appendChild(balaDiv);
+		});
+
+	}
+
+	function makeStrings() {
+		const stringsContainer = document.getElementById('strings');
+
+		soundDefinitions.stringSounds.forEach((ss, index) => {
+			const stringDiv = document.createElement('div');
+			stringDiv.className = 'string';
+			stringDiv.setAttribute('data-sound', ss[0]);
+			stringDiv.style["border-width"] = `0 0 ${5 - (index/2)}px 0`;
+			stringsContainer.appendChild(stringDiv);
+		});
+	}
+
+	function makeWinds() {
+		const bansuriContainer = document.querySelector('.bansuri');
+
+	soundDefinitions.bansuri.forEach((ss, index) => {
+		const bansuriDiv = document.createElement('div');
+		bansuriDiv.className = 'bansuri-key';
+		bansuriDiv.setAttribute('data-sound', ss[0]);
+		bansuriDiv.style.top = `${(index+1)*50}px`;
+		bansuriContainer.appendChild(bansuriDiv);
 	});
+	}
+
+	makePiano();
+	makeDrums();
+	makeStrings();
+	makeWinds();
+
+
+	function setupPointerEventsForInstrument(selector, playSoundFunction) {
+		let isPointerDown = false;
+
+		document.querySelectorAll(selector).forEach(element => {
+		['pointerdown'].forEach(type => {
+			element.addEventListener(type, (event) => {
+				isPointerDown = true;
+						playSoundFunction(element.getAttribute('data-sound'), true, event);
+				element.classList.toggle("active");
+			});
+		});
+			['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
+				element.addEventListener(type, (event) => {
+					isPointerDown = false;
+					playSoundFunction(element.getAttribute('data-sound'), false, event);
+			element.classList.remove("active");
+
+				});
+			});
+		});
+	}
+	setupPointerEventsForInstrument('.drum', playDrumSound);
+	setupPointerEventsForInstrument('.string', playStringSound);
+	setupPointerEventsForInstrument('.key', playKey);
+	setupPointerEventsForInstrument('.bf-key', playDrumSound);
+	setupPointerEventsForInstrument('.dayan', playDrumSound);
+	setupPointerEventsForInstrument('.bayan', playDrumSound);
+	setupPointerEventsForInstrument('.bansuri-key', playWindSound);
+
+	const progressBar = document.getElementById('progressBar');
+
+	function updateProgressBar(audioSource, audioCtx) {
+		if (audioSource.buffer) {
+			const duration = audioSource.buffer.duration;
+			const currentTime = audioCtx.currentTime - (audioSource.startTime ? audioSource.startTime: 0 );
+			const progressPercentage = (currentTime / duration) * 100;
+		progressBar.style.width = progressPercentage + "%";
+		progressBar.style['background-color'] = window.currentTheme;
+		progressBar.innerHTML = `<p><strong>${currentTime.toFixed(2)}/${duration.toFixed(2)}</strong></p>`
+			if (currentTime <= duration) {
+				requestAnimationFrame(() => updateProgressBar(audioSource, audioCtx));
+			}
+		}
+	}
+
+	const audioFileCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+	document.getElementById('audioInput').addEventListener('change', function(event) {
+		const file = event.target.files[0]; // Get the first file selected by the user
+		if (!file) {
+			console.log("No file selected!");
+			return;
+		}
+
+		const reader = new FileReader();
+
+		reader.onload = function(fileLoadEvent) {
+			const arrayBuffer = fileLoadEvent.target.result;
+
+		audioFileCtx.decodeAudioData(arrayBuffer, function(audioBuffer) {
+				window.audioBuffer = audioBuffer;
+			const sampleRate = audioBuffer.sampleRate;
+			 const analyserLeft = audioFileCtx.createAnalyser();
+			const analyserRight = audioFileCtx.createAnalyser();
+			const splitter = audioFileCtx.createChannelSplitter(2);
+			const source = audioFileCtx.createBufferSource();
+				source.buffer = audioBuffer;
+				source.connect(splitter);
+			splitter.connect(analyserLeft, 0, 0);
+			splitter.connect(analyserRight, 1, 0);
+
+				analyserLeft.connect(audioFileCtx.destination);
+				analyserRight.connect(audioFileCtx.destination);
+				source.start();
+
+			   analyserLeft.fftSize = 2048;
+			analyserRight.fftSize = 2048;
+			const bufferLengthLeft = analyserLeft.frequencyBinCount;
+			const bufferLengthRight = analyserRight.frequencyBinCount;
+			const dataArrayLeft = new Uint8Array(bufferLengthLeft);
+			const dataArrayRight = new Uint8Array(bufferLengthRight);
+			const dataArrayWLeft = new Uint8Array(analyserLeft.fftSize);
+			const dataArrayWRight = new Uint8Array(analyserRight.fftSize);
+
+			analyserLeft.getByteFrequencyData(dataArrayLeft);
+			analyserRight.getByteFrequencyData(dataArrayRight);
+			analyserLeft.getByteTimeDomainData(dataArrayWLeft);
+			analyserRight.getByteTimeDomainData(dataArrayWRight);
+
+
+			const canvasContextL = window.SM.setupCanvas(left_fviz);
+			const canvasContextR = window.SM.setupCanvas(right_fviz);
+			const canvasContextWL = window.SM.setupCanvas(left_wviz);
+			const canvasContextWR = window.SM.setupCanvas(right_wviz);
+
+			let frameCount = audioBuffer.length;
+			let frameCountW = audioBuffer.length;
+			window.SM.drawFrequency(left_fviz, canvasContextL, analyserLeft, dataArrayLeft, frameCount);
+			window.SM.drawFrequency(right_fviz, canvasContextR, analyserRight, dataArrayRight, frameCount);
+			window.SM.drawWaveform(left_wviz, canvasContextWL, analyserLeft, dataArrayWLeft, frameCountW);
+			window.SM.drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
+			updateProgressBar(source, audioFileCtx);
+
+		if (document.querySelector("#analyse_file").checked) {
+			analyseSound(audioBuffer, sampleRate);
+		}
+
+
+			}, function(e){ console.log("Error with decoding audio data" + e.err); });
+		};
+
+		reader.readAsArrayBuffer(file);
+	});
+
+});
 function analyseSound (audioBuffer, sampleRate) {
 	const audioData = audioBuffer.getChannelData(0);
 	const complexData = Array.from(audioData).map(re => ({ re, im: 0 }));
