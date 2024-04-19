@@ -109,6 +109,7 @@ export class SoundEngine {
 
         // Connect the filter to the master gain
         this.bandPassFilter.connect(this.masterGain);
+
     }
 
     playSoundFromArray(soundData) {
@@ -118,14 +119,11 @@ export class SoundEngine {
         let startTime = this.audioContext.currentTime;
 
         soundData.forEach((channels) => {
-            let durs = [];
             channels.forEach(channelData => {
                 channelData.forEach(cd => {
                     this.playChannel(cd, startTime);
-                    durs.push(cd[3]);
                 });
             });
-            startTime  += Math.max(null, durs.map(d => ( d[0] + d[1] + d[2] + d[3])));
     	});
 
         if (this.recording) {
@@ -145,11 +143,9 @@ export class SoundEngine {
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
         const dataArrayW = new Uint8Array(analyser.fftSize);
 
-
         const periodicWave = this.audioContext.createPeriodicWave(new Float32Array(real), new Float32Array(imag));
         oscillator.setPeriodicWave(periodicWave);
         oscillator.frequency.value = frequency;
-
 
         panner.pan.setValueAtTime(panValue, startTime);
 
@@ -162,14 +158,14 @@ export class SoundEngine {
         const canvasContext = panValue >= 0 ? setupCanvas(right_fviz) : setupCanvas(left_fviz);
         const canvasContextW = panValue >= 0 ? setupCanvas(right_wviz) : setupCanvas(left_wviz);
         this.oscillators.push(oscillator);
-        oscillator.start(startTime);
         let frameCount = 100;
         let frameCountW = 100;
         if (document.querySelector("#spectra").style.display != 'none')	drawFrequency((panValue >=0 ? right_fviz : left_fviz), canvasContext, analyser, dataArray, frameCount);
         if (document.querySelector("#wave").style.display != 'none')	drawWaveform((panValue >=0 ? right_wviz : left_wviz), canvasContextW, analyser, dataArrayW, frameCountW);
         if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyser, 10, panValue);
-        oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
 
+        oscillator.start(startTime);
+        oscillator.stop(startTime + adsr.reduce((acc, val) => acc + val, 0));
 
     }
 
@@ -178,9 +174,101 @@ export class SoundEngine {
         gainNode.gain.cancelScheduledValues(startTime);
         gainNode.gain.setValueAtTime(0.001, startTime);
         gainNode.gain.linearRampToValueAtTime(peakAmp, startTime + attack);
-        gainNode.gain.linearRampToValueAtTime(susAmp, startTime + attack + decay + sustain);
+        gainNode.gain.linearRampToValueAtTime(susAmp, startTime + attack + decay);
         gainNode.gain.linearRampToValueAtTime(0.001, startTime + attack + decay + sustain + release);
 
+    }
+
+    makeDynamicSounds () {
+        const baseSoundMap = {
+            example_sound: [659.25, 622.25,  659.25,  622.25, 659.25,  493.88, 587.33,  523.25, 440.00, 659.25, 622.25, 659.25,  622.25,  659.25, 493.88, 587.33, 523.25, 440.00],
+            drums: [42, 64, 95, 112, 130, 154],
+            strings: [48, 82, 110, 147, 196, 247, 330, 393, 444, 500, 534],
+            balafon: [185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33],
+            bansuri: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25],
+            tabla: {
+                dayan: [246.94, 261.63, 277.18, 293.66],
+                bayan: [110.00, 116.54]
+            }
+        };
+        const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
+        const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
+        const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0, 0.9, 0]];
+        const t_def = [[0,1,0], [0,0,0], [0.1, 0.1, 0.8, 0]];
+        const harmonicalDepth = 3;
+        const stereoChannels = [-1, 1];
+        const soundDefinitions = {};
+
+        const makeDefInstHarmonic = (def, type, i) => {
+            const decayReduction = 1.2;
+            const sustainLevelAdjustment = 0.8;
+            let temp_def = JSON.parse(JSON.stringify(def));
+            const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
+            if (type == 'drum') temp_def[2][0] = (parseFloat((temp_def[2][0] - curvedResponse(i))/10000));
+            if (type == 'string') temp_def[2][0] = (parseFloat((temp_def[2][0] - curvedResponse(i))/1000));
+            temp_def[2][1] = temp_def[2][1] * Math.pow(decayReduction, i);
+            temp_def[2][2] = temp_def[2][1] * Math.pow(sustainLevelAdjustment, i);
+            return temp_def
+        };
+
+        const makeIntrumentHarmonics = (frequency, index, type, def) => {
+            let harmonics = [];
+            let harmonicDecayFactor = 0.8;
+
+            harmonics.push([frequency].concat(makeDefInstHarmonic(def, type, 0)))
+
+            for (let n = 1; n <= harmonicalDepth; n++) {
+                let harmonicFreq = frequency * (n + 1);
+                let amplitude = Math.pow(harmonicDecayFactor, n);
+                let h_def = makeDefInstHarmonic(def, type, n);
+                h_def[2].push(amplitude, 0);
+                harmonics.push([ harmonicFreq ].concat(h_def));
+            }
+
+            for (let n = 1; n <= harmonicalDepth; n++) {
+                let octaveFreq = frequency / Math.pow(2, n);
+                if (octaveFreq >= 20) {
+                    let amplitude = 1 / n;
+                    let h_def = makeDefInstHarmonic(def, type, n);
+                    h_def[2].push(amplitude, 0);
+                    harmonics.unshift([ octaveFreq ].concat(h_def));
+                }
+            }
+
+            return harmonics;
+        };
+
+        const expandIntrumentSound = (baseFrequencies, type, def) => {
+            const harmonicSound = baseFrequencies.map((f, i) => {
+                    return makeIntrumentHarmonics(f, i, type, def)
+                });
+            const stereoSound = harmonicSound.map(hs => {
+                    return stereoChannels.map(st => {
+                        return hs.map(hss => hss.concat(st))
+        });
+        });
+            return stereoSound;
+        };
+
+        soundDefinitions.example_sound = expandIntrumentSound(baseSoundMap.example_sound, 'keys', p_def);
+        soundDefinitions.drumSounds = expandIntrumentSound(baseSoundMap.drums, 'drum', d_def).map((ds, i) => { return [`DS${i}`, ds]});
+
+        soundDefinitions.stringSounds = baseSoundMap.strings.map((ss, i) => {
+                return [ `SS${i}`, ss, function (f) {
+                    return expandIntrumentSound([f], 'string', s_def)
+                }];
+        });
+
+        soundDefinitions.balafon = expandIntrumentSound(baseSoundMap.balafon, 'balafon', t_def).map((bs, i) => { return [`BS${i}`, bs]});
+        soundDefinitions.tabla = {};
+        soundDefinitions.tabla.dayan = expandIntrumentSound(baseSoundMap.tabla.dayan, 'tabla', t_def).map((ts, i) => { return [`TS${i}`, ts]});
+        soundDefinitions.tabla.bayan = expandIntrumentSound(baseSoundMap.tabla.bayan, 'tabla', t_def).map((ts, i) => { return [`TS${i}`, ts]});
+        soundDefinitions.bansuri = expandIntrumentSound(baseSoundMap.bansuri, 'bansuri', t_def).map((bs, i) => { return [`BS${i}`, bs]});
+
+        soundDefinitions.keys = function (i) {
+            return expandIntrumentSound([calculateFrequency(i)], 'keys', p_def)
+        };
+        return soundDefinitions;
     }
 
     pause() {

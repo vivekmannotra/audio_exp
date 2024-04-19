@@ -23,28 +23,28 @@ export default class SoundViz {
 	this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 	this.timeVizInc = 0.01;
 	this.axesVertices = new Float32Array([
-    // X-axis (red)
-    -2.0, 0.0, 0.0,
-    2.0, 0.0, 0.0,
-    // Y-axis (green)
-    0.0, -2.0, 0.0,
-    0.0, 2.0, 0.0,
-    // Z-axis (blue)
-    0.0, 0.0, -2.0,
-    0.0, 0.0, 2.0
-]);
+        // X-axis (red)
+        -2.0, 0.0, 0.0,
+        2.0, 0.0, 0.0,
+        // Y-axis (green)
+        0.0, -2.0, 0.0,
+        0.0, 2.0, 0.0,
+        // Z-axis (blue)
+        0.0, 0.0, -2.0,
+        0.0, 0.0, 2.0
+    ]);
 
-this.axesColors = new Float32Array([
-    // X-axis color (red)
-    1.0, 0.0, 0.0, 1.0,
-    1.0, 0.0, 0.0, 1.0,
-    // Y-axis color (green)
-    0.0, 1.0, 0.0, 1.0,
-    0.0, 1.0, 0.0, 1.0,
-    // Z-axis color (blue)
-    0.0, 0.0, 1.0, 1.0,
-    0.0, 0.0, 1.0, 1.0
-]);
+    this.axesColors = new Float32Array([
+        // X-axis color (red)
+        1.0, 0.0, 0.0, 1.0,
+        1.0, 0.0, 0.0, 1.0,
+        // Y-axis color (green)
+        0.0, 1.0, 0.0, 1.0,
+        0.0, 1.0, 0.0, 1.0,
+        // Z-axis color (blue)
+        0.0, 0.0, 1.0, 1.0,
+        0.0, 0.0, 1.0, 1.0
+    ]);
 
 
         this.initEventListeners();
@@ -58,28 +58,26 @@ this.axesColors = new Float32Array([
         }
 
         this.vertexShaderSource = `
-  uniform mat4 uModelViewMatrix;
-  uniform mat4 uProjectionMatrix;
-  attribute vec4 aVertexPosition;
- attribute vec4 aVertexColor;
-uniform bool useVertexColor;
-uniform vec4 defaultColor;
-varying lowp vec4 vColor;
-  void main() {
-    gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-    gl_PointSize = 2.0;
-	vColor = useVertexColor ? aVertexColor : defaultColor;
-  }
-`
+          uniform mat4 uModelViewMatrix;
+          uniform mat4 uProjectionMatrix;
+          attribute vec4 aVertexPosition;
+         attribute vec4 aVertexColor;
+        uniform bool useVertexColor;
+        uniform vec4 defaultColor;
+        varying lowp vec4 vColor;
+          void main() {
+            gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+            gl_PointSize = 2.0;
+            vColor = useVertexColor ? aVertexColor : defaultColor;
+          }`;
         this.fragmentShaderSource = `
-varying lowp vec4 vColor;
-  void main() {
-	gl_FragColor = vColor;
-  }
-`;
+            varying lowp vec4 vColor;
+              void main() {
+                gl_FragColor = vColor;
+              }`;
 
         this.compileShader(this.vertexShaderSource, this.gl.VERTEX_SHADER);
-this.compileShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
+    this.compileShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
 
         this.createProgram();
         this.initializeBuffers();
@@ -116,11 +114,11 @@ this.compileShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
             program: shaderProgram,
             attribLocations: {
                 vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-		vertexColor: this.gl.getAttribLocation(shaderProgram, 'aVertexColor')
+		        vertexColor: this.gl.getAttribLocation(shaderProgram, 'aVertexColor')
             },
             uniformLocations: {
-		useVertexColor: this.gl.getUniformLocation(shaderProgram, 'useVertexColor'),
-		defaultColor: this.gl.getUniformLocation(shaderProgram, 'defaultColor'),
+		        useVertexColor: this.gl.getUniformLocation(shaderProgram, 'useVertexColor'),
+		        defaultColor: this.gl.getUniformLocation(shaderProgram, 'defaultColor'),
                 projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
                 modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
             },
@@ -161,7 +159,7 @@ this.compileShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
         this.gl.depthFunc(this.gl.LEQUAL);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 	
-	this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+	    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
         this.gl.vertexAttribPointer(this.programInfo.attribLocations.vertexPosition, 3, this.gl.FLOAT, false, 0, 0);
         this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexPosition);
 
@@ -169,120 +167,119 @@ this.compileShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
         this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.projectionMatrix, false, this.projectionMatrix);
         this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.modelViewMatrix, false, this.modelViewMatrix);
 
-	this.gl.uniform1i(this.programInfo.uniformLocations.useVertexColor, 0);
-	this.gl.uniform4fv(this.programInfo.uniformLocations.defaultColor, [0.0, 0.0, 0.0, 1.0]); 
+	    this.gl.uniform1i(this.programInfo.uniformLocations.useVertexColor, 0);
+	    this.gl.uniform4fv(this.programInfo.uniformLocations.defaultColor, [0, 0, 0, 1]);
 
         this.gl.drawArrays(this.gl.POINTS, 0, this.vertexCount);
 
-	this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesVertexBuffer);
-	this.gl.vertexAttribPointer(this.programInfo.attribLocations.vertexPosition, 3, this.gl.FLOAT, false, 0, 0);
-	this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexPosition);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesVertexBuffer);
+        this.gl.vertexAttribPointer(this.programInfo.attribLocations.vertexPosition, 3, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexPosition);
 
-	this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColorBuffer);
-	this.gl.vertexAttribPointer(this.programInfo.attribLocations.vertexColor, 4, this.gl.FLOAT, false, 0, 0);
-	this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexColor);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColorBuffer);
+        this.gl.vertexAttribPointer(this.programInfo.attribLocations.vertexColor, 4, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexColor);
 
-	this.gl.uniform1i(this.programInfo.uniformLocations.useVertexColor, 1);
+        this.gl.uniform1i(this.programInfo.uniformLocations.useVertexColor, 1);
 
-	this.gl.drawArrays(this.gl.LINES, 0, 6);
+        this.gl.drawArrays(this.gl.LINES, 0, 6);
 
-	this.gl.disableVertexAttribArray(this.programInfo.attribLocations.vertexColor);
+        this.gl.disableVertexAttribArray(this.programInfo.attribLocations.vertexColor);
 
 
-const error = this.gl.getError();
-if (error !== this.gl.NO_ERROR) {
-    console.error('WebGL Error:', error);
-}
-    }
-
-startVisualizationLoop(analyser, maxIterations = 100, panValue) {
-
-    let iterationCount = 0;
-	this.frequencyPositions = [];
-	this.waveformPositions = [];
-	this.currentFreqTimeStep = undefined;
-	this.currentWaveTimeStep = undefined;
-	this.maxIter = maxIterations;
-    const drawLoop = () => {
-        
-        if (iterationCount <= maxIterations) {
-            this.updatePositionsFromAudio(analyser, panValue);
-        	iterationCount++; 
-        	requestAnimationFrame(drawLoop);
+        const error = this.gl.getError();
+        if (error !== this.gl.NO_ERROR) {
+            console.error('WebGL Error:', error);
         }
-  
-    };
+    }
+    startVisualizationLoop(analyser, maxIterations = 100, panValue) {
 
-    requestAnimationFrame(drawLoop); 
-}
+        let iterationCount = 0;
+        this.frequencyPositions = [];
+        this.waveformPositions = [];
+        this.currentFreqTimeStep = undefined;
+        this.currentWaveTimeStep = undefined;
+        this.maxIter = maxIterations;
+        const drawLoop = () => {
+
+            if (iterationCount <= maxIterations) {
+                this.updatePositionsFromAudio(analyser, panValue);
+                iterationCount++;
+                requestAnimationFrame(drawLoop);
+            }
+
+        };
+
+        requestAnimationFrame(drawLoop);
+    }
 
 
 	updatePositionsFromAudio(analyser, panValue) {
-	let positions = [];
-	positions  = positions.concat(this.updateFrequencyPositions(analyser, panValue));
-	positions  = positions.concat(this.updateWaveformPositions(analyser, panValue));
+        let positions = [];
+        positions  = positions.concat(this.updateFrequencyPositions(analyser, panValue));
+        positions  = positions.concat(this.updateWaveformPositions(analyser, panValue));
 
-//freq.forEach((value, index) => { positions.push(-1*index/freq.length);    positions.push(-1*value/peakF);    positions.push(0); }); 
-//wave.forEach((value, index) => { positions.push(-1*index/wave.length);    positions.push(-1*value/peakW);    positions.push(0); }); 
-	  this.updatePositions(positions);
-	    this.draw();
+    //freq.forEach((value, index) => { positions.push(-1*index/freq.length);    positions.push(-1*value/peakF);    positions.push(0); });
+    //wave.forEach((value, index) => { positions.push(-1*index/wave.length);    positions.push(-1*value/peakW);    positions.push(0); });
+          this.updatePositions(positions);
+            this.draw();
 
-}
-	
-updateFrequencyPositions(analyser, panValue) {
-    const freq = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(freq);
-
-    if (!this.frequencyPositions) {
-        this.frequencyPositions = [];
-    }
-    if (this.currentFreqTimeStep === undefined) {
-        this.currentFreqTimeStep = 0;
-    } else {
-        this.currentFreqTimeStep += this.timeVizInc;
     }
 
-    let peakF = Math.max(...freq) || 1;
+    updateFrequencyPositions(analyser, panValue) {
+        const freq = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(freq);
 
-    const maxHeight = 1;
+        if (!this.frequencyPositions) {
+            this.frequencyPositions = [];
+        }
+        if (this.currentFreqTimeStep === undefined) {
+            this.currentFreqTimeStep = 0;
+        } else {
+            this.currentFreqTimeStep += this.timeVizInc;
+        }
 
-    for (let i = 0; i < freq.length; i++) {
-        const x = panValue*this.currentFreqTimeStep;
-        const y = i == 0 ? i : (i/1000);
-        const z = (freq[i] / peakF) * maxHeight; 
+        let peakF = Math.max(...freq) || 1;
 
-        this.frequencyPositions.push(x, y, z);
+        const maxHeight = 1;
+
+        for (let i = 0; i < freq.length; i++) {
+            const x = panValue*this.currentFreqTimeStep;
+            const y = i == 0 ? i : (i/1000);
+            const z = (freq[i] / peakF) * maxHeight;
+
+            this.frequencyPositions.push(x, y, z);
+        }
+
+        return this.frequencyPositions;
     }
 
-	return this.frequencyPositions;
-}
 
+    updateWaveformPositions(analyser, panValue) {
+        const wave = new Uint8Array(analyser.fftSize);
+        analyser.getByteTimeDomainData(wave);
 
-updateWaveformPositions(analyser, panValue) {
-    const wave = new Uint8Array(analyser.fftSize);
-    analyser.getByteTimeDomainData(wave);
+        if (!this.waveformPositions) {
+            this.waveformPositions = [];
+        }
+        if (this.currentWaveTimeStep === undefined) {
+            this.currentWaveTimeStep = 0;
+        } else {
+            this.currentWaveTimeStep += this.timeVizInc;
+        }
 
-    if (!this.waveformPositions) {
-        this.waveformPositions = []; 
+        let peakW = Math.max(...wave) || 1;
+
+        const maxHeight = 1;
+        for (let i = 0; i < wave.length; i++) {
+            const x = panValue*this.currentWaveTimeStep;
+            const y = -1*(wave[i] / peakW) * maxHeight;
+            const z = ((wave .length/2)*-1 - i)/1000;
+            this.waveformPositions.push(x, y, z);
+        }
+
+        return  this.waveformPositions;
     }
-    if (this.currentWaveTimeStep === undefined) {
-        this.currentWaveTimeStep = 0; 
-    } else {
-        this.currentWaveTimeStep += this.timeVizInc;
-    }
-
-    let peakW = Math.max(...wave) || 1;
-
-    const maxHeight = 1;
-    for (let i = 0; i < wave.length; i++) {
-        const x = panValue*this.currentWaveTimeStep;
-        const y = -1*(wave[i] / peakW) * maxHeight;
-        const z = ((wave .length/2)*-1 - i)/1000;
-        this.waveformPositions.push(x, y, z);
-    }
-
-	return  this.waveformPositions;
-}
 
     
     initEventListeners() {
@@ -321,30 +318,38 @@ updateWaveformPositions(analyser, panValue) {
 
     rotateCamera(deltaX, deltaY) {
 
-    if (this.cameraAngleY) { this.cameraAngleY += deltaX * 0.01; } else { this.cameraAngleY = deltaX * 0.01; }
-    if (this.cameraAngleX) { this.cameraAngleX += deltaY * 0.01; } else { this.cameraAngleX = deltaY * 0.01; }
-    this.cameraAngleX = Math.max(Math.min(this.cameraAngleX, Math.PI / 2), -Math.PI / 2);
-    this.updateModelViewMatrix();
-    this.draw();
-	}
+        if (this.cameraAngleY) {
+            this.cameraAngleY += deltaX * 0.01;
+        } else {
+            this.cameraAngleY = deltaX * 0.01;
+        }
+        if (this.cameraAngleX) {
+            this.cameraAngleX += deltaY * 0.01;
+        } else {
+            this.cameraAngleX = deltaY * 0.01;
+        }
+        this.cameraAngleX = Math.max(Math.min(this.cameraAngleX, Math.PI / 2), -Math.PI / 2);
+        this.updateModelViewMatrix();
+        this.draw();
+    }
 
-updateModelViewMatrix() {
-
-	
-let radius = 6; 
-
-let cameraPosX = radius * Math.sin(this.cameraAngleY) * Math.cos(this.cameraAngleX);
-let cameraPosY = radius * Math.sin(this.cameraAngleX);
-let cameraPosZ = radius * Math.cos(this.cameraAngleY) * Math.cos(this.cameraAngleX);
-
-let cameraPos = [cameraPosX, cameraPosY, cameraPosZ];
-let center = [0, 0, 0]; 
-let upVector = [0, 1, 0];
+    updateModelViewMatrix() {
 
 
-    glMatrix.mat4.identity(this.modelViewMatrix);
-    glMatrix.mat4.lookAt(this.modelViewMatrix, cameraPos, center, upVector);
-}
+        let radius = 6;
+
+        let cameraPosX = radius * Math.sin(this.cameraAngleY) * Math.cos(this.cameraAngleX);
+        let cameraPosY = radius * Math.sin(this.cameraAngleX);
+        let cameraPosZ = radius * Math.cos(this.cameraAngleY) * Math.cos(this.cameraAngleX);
+
+        let cameraPos = [cameraPosX, cameraPosY, cameraPosZ];
+        let center = [0, 0, 0];
+        let upVector = [0, 1, 0];
+
+
+        glMatrix.mat4.identity(this.modelViewMatrix);
+        glMatrix.mat4.lookAt(this.modelViewMatrix, cameraPos, center, upVector);
+    }
 
 
 }
