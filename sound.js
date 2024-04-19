@@ -175,6 +175,7 @@ export class SoundEngine {
         gainNode.gain.setValueAtTime(0.001, startTime);
         gainNode.gain.linearRampToValueAtTime(peakAmp, startTime + attack);
         gainNode.gain.linearRampToValueAtTime(susAmp, startTime + attack + decay);
+        gainNode.gain.linearRampToValueAtTime(susAmp, startTime + attack + decay + sustain);
         gainNode.gain.linearRampToValueAtTime(0.001, startTime + attack + decay + sustain + release);
 
     }
@@ -195,12 +196,12 @@ export class SoundEngine {
         const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
         const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0, 0.9, 0]];
         const t_def = [[0,1,0], [0,0,0], [0.1, 0.1, 0.8, 0]];
-        const harmonicalDepth = 3;
+        const harmonicalDepth = 1;
         const stereoChannels = [-1, 1];
         const soundDefinitions = {};
 
         const makeDefInstHarmonic = (def, type, i) => {
-            const decayReduction = 1.2;
+            const decayReduction = 1.5;
             const sustainLevelAdjustment = 0.8;
             let temp_def = JSON.parse(JSON.stringify(def));
             const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
@@ -213,7 +214,7 @@ export class SoundEngine {
 
         const makeIntrumentHarmonics = (frequency, index, type, def) => {
             let harmonics = [];
-            let harmonicDecayFactor = 0.8;
+            let harmonicDecayFactor = 0.5;
 
             harmonics.push([frequency].concat(makeDefInstHarmonic(def, type, 0)))
 
