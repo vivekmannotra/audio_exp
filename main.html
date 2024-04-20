@@ -255,13 +255,6 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 				piano.appendChild(keyDiv);
 			}
 
-			keyDiv.addEventListener('click', function(event) {
-				event.target.classList.add("active");
-
-			 playKey(i, event.target);
-				event.target.classList.remove("active");
-			});
-
 			if (isBlack) {
 
 				piano.appendChild(keyDiv);
@@ -343,7 +336,7 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 			['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => {
 				element.addEventListener(type, (event) => {
 					isPointerDown = false;
-					playSoundFunction(element.getAttribute('data-sound'), false, event);
+					//playSoundFunction(element.getAttribute('data-sound'), false, event);
 					element.classList.remove("active");
 
 				});

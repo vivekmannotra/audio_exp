@@ -133,6 +133,7 @@ export class SoundEngine {
     }
 
     playChannel(channelData, startTime) {
+
         const [frequency, real, imag, adsr, panValue] = channelData;
 
         const oscillator = this.audioContext.createOscillator();
@@ -196,12 +197,12 @@ export class SoundEngine {
         const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
         const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.01, 0, 0.9, 0]];
         const t_def = [[0,1,0], [0,0,0], [0.1, 0.1, 0.8, 0]];
-        const harmonicalDepth = 1;
+        const harmonicalDepth = 2;
         const stereoChannels = [-1, 1];
         const soundDefinitions = {};
 
         const makeDefInstHarmonic = (def, type, i) => {
-            const decayReduction = 1.5;
+            const decayReduction = 1.2;
             const sustainLevelAdjustment = 0.8;
             let temp_def = JSON.parse(JSON.stringify(def));
             const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
@@ -214,7 +215,7 @@ export class SoundEngine {
 
         const makeIntrumentHarmonics = (frequency, index, type, def) => {
             let harmonics = [];
-            let harmonicDecayFactor = 0.5;
+            let harmonicDecayFactor = 0.8;
 
             harmonics.push([frequency].concat(makeDefInstHarmonic(def, type, 0)))
 

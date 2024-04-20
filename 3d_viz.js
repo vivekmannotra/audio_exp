@@ -136,6 +136,8 @@ export default class SoundViz {
 	this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColorBuffer);
 	this.gl.bufferData(this.gl.ARRAY_BUFFER, this.axesColors, this.gl.STATIC_DRAW);
 
+
+
     }
 
     initializeCamera() {
@@ -146,10 +148,15 @@ export default class SoundViz {
     }
 
     updatePositions(positions) {
-	this.positions = positions;
-	this.vertexCount = positions.length / 3;
+	    this.positions = positions;
+	    this.vertexCount = positions.length / 3;
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
+
+        this.pointColorBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.pointColorBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.colors), this.gl.STATIC_DRAW);
+
     }
 
     draw() {
@@ -158,19 +165,25 @@ export default class SoundViz {
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-	
+
 	    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
         this.gl.vertexAttribPointer(this.programInfo.attribLocations.vertexPosition, 3, this.gl.FLOAT, false, 0, 0);
         this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexPosition);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.pointColorBuffer);
+        this.gl.vertexAttribPointer( this.programInfo.attribLocations.vertexColor, 4, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(this.programInfo.attribLocations.vertexColor);
 
         this.gl.useProgram(this.programInfo.program);
         this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.projectionMatrix, false, this.projectionMatrix);
         this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.modelViewMatrix, false, this.modelViewMatrix);
 
-	    this.gl.uniform1i(this.programInfo.uniformLocations.useVertexColor, 0);
-	    this.gl.uniform4fv(this.programInfo.uniformLocations.defaultColor, [0, 0, 0, 1]);
+	    this.gl.uniform1i(this.programInfo.uniformLocations.useVertexColor, 1);
+	    //this.gl.uniform4fv(this.programInfo.uniformLocations.defaultColor, [0, 0, 0, 1]);
 
         this.gl.drawArrays(this.gl.POINTS, 0, this.vertexCount);
+
+        this.gl.disableVertexAttribArray(this.programInfo.attribLocations.vertexColor);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesVertexBuffer);
         this.gl.vertexAttribPointer(this.programInfo.attribLocations.vertexPosition, 3, this.gl.FLOAT, false, 0, 0);
@@ -199,6 +212,7 @@ export default class SoundViz {
         this.waveformPositions = [];
         this.currentFreqTimeStep = undefined;
         this.currentWaveTimeStep = undefined;
+        this.colors = [];
         this.maxIter = maxIterations;
         const drawLoop = () => {
 
@@ -221,10 +235,12 @@ export default class SoundViz {
 
     //freq.forEach((value, index) => { positions.push(-1*index/freq.length);    positions.push(-1*value/peakF);    positions.push(0); });
     //wave.forEach((value, index) => { positions.push(-1*index/wave.length);    positions.push(-1*value/peakW);    positions.push(0); });
+
           this.updatePositions(positions);
             this.draw();
 
     }
+
 
     updateFrequencyPositions(analyser, panValue) {
         const freq = new Uint8Array(analyser.frequencyBinCount);
@@ -245,10 +261,12 @@ export default class SoundViz {
 
         for (let i = 0; i < freq.length; i++) {
             const x = panValue*this.currentFreqTimeStep;
-            const y = i == 0 ? i : (i/1000);
+            const y = i == 0 ? i : (i/500);
             const z = (freq[i] / peakF) * maxHeight;
 
             this.frequencyPositions.push(x, y, z);
+
+            this.colors.push(x, y, z, 1.0);
         }
 
         return this.frequencyPositions;
@@ -272,10 +290,12 @@ export default class SoundViz {
 
         const maxHeight = 1;
         for (let i = 0; i < wave.length; i++) {
-            const x = panValue*this.currentWaveTimeStep;
+            const x = panValue * this.currentWaveTimeStep;
             const y = -1*(wave[i] / peakW) * maxHeight;
-            const z = ((wave .length/2)*-1 - i)/1000;
+            const z = ((wave.length/2) - i)/500;
             this.waveformPositions.push(x, y, z);
+
+            this.colors.push(x, y, z, 1.0);
         }
 
         return  this.waveformPositions;
