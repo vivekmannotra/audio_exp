@@ -99,59 +99,6 @@ section {
     cursor: pointer;
 }
 
-.oboe {
-    position: relative;
-    width: 50px;
-    height: 250px;
-    background-color: brown;
-    border-radius: 20px;
-}
-
-.oboe-body {
-    position: absolute;
-    top: 25px;
-    left: 25%;
-    width: 50%;
-    height: 80%;
-    background-color: sienna;
-    border-radius: 10px;
-}
-
-.oboe-keys {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    right: 0;
-    margin: auto;
-    width: 10px;
-    height: 10px;
-    background-color: silver;
-    border-radius: 50%;
-    box-shadow: 0 0 0 10px silver, 0 0 0 20px silver, 0 0 0 30px silver;
-}
-
-.oboe-bell {
-    position: absolute;
-    bottom: 0;
-    left: 10%;
-    width: 80%;
-    height: 25px;
-    background-color: sienna;
-    border-bottom-left-radius: 50px;
-    border-bottom-right-radius: 50px;
-}
-
-.switch {
-    display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
 .tablas {
     display: flex;
     justify-content: center;
@@ -268,8 +215,8 @@ button {
 #glCanvas {
 
     height: 60vh;
-    width: 60%;
-    margin: 0 20%;
+    width: 80%;
+    margin: 0 10%;
 }
 
 @media (max-width: 600px) {
