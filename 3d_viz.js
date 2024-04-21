@@ -21,7 +21,7 @@ export default class SoundViz {
         this.canvas.height = height;
     }	
 	this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-	this.timeVizInc = 0.01;
+	this.timeVizInc = 0.005;
 	this.axesVertices = new Float32Array([
         // X-axis (red)
         -2.0, 0.0, 0.0,
@@ -262,11 +262,13 @@ export default class SoundViz {
         for (let i = 0; i < freq.length; i++) {
             const x = panValue*this.currentFreqTimeStep;
             const y = i == 0 ? i : (i/500);
-            const z = (freq[i] / peakF) * maxHeight;
+            const z = (freq[i] / peakF);
 
-            this.frequencyPositions.push(x, y, z);
+            this.frequencyPositions.push(x, (y + 0.25), z);
 
-            this.colors.push(x, y, z, 1.0);
+            const dataDensity = 2;
+		    const pCol = this.getColor(i, wave.length, dataDensity);
+            this.colors.push(pCol[0], pCol[1], pCol[2], 1.0);
         }
 
         return this.frequencyPositions;
@@ -294,14 +296,39 @@ export default class SoundViz {
             const y = -1*(wave[i] / peakW) * maxHeight;
             const z = ((wave.length/2) - i)/500;
             this.waveformPositions.push(x, y, z);
-
-            this.colors.push(x, y, z, 1.0);
+            const dataDensity = 2.35;
+		    const pCol = this.getColor(i, wave.length, dataDensity);
+            this.colors.push(pCol[0], pCol[1], pCol[2], 1.0);
         }
 
         return  this.waveformPositions;
     }
 
-    
+    getColor(i, l, densityFactor = 1) {
+      // Constants to define the speed and complexity of the color cycle
+      const frequency = (2 * Math.PI / l) * densityFactor; // Adjust frequency based on data density
+        function clampAndRound(value) {
+          return Math.min(Math.max(Math.round(value * 100) / 100, 0), 1);
+        }
+      // Adjust the phase offsets based on data density to enhance color distinction
+      const phaseR = densityFactor * 0;
+      const phaseG = densityFactor * 2 * Math.PI / 3;
+      const phaseB = densityFactor * 4 * Math.PI / 3;
+
+      // Calculate red, green, and blue values based on sine functions
+      let r = Math.sin(frequency * i + phaseR) * 0.5 + 0.5;
+      let g = Math.sin(frequency * i + phaseG) * 0.5 + 0.5;
+      let b = Math.sin(frequency * i + phaseB) * 0.5 + 0.5;
+
+      // Normalize the RGB values to the range [0.0, 1.0]
+      r = clampAndRound(r);
+      g = clampAndRound(g);
+      b = clampAndRound(b);
+
+      return [r, g, b];
+    }
+
+
     initEventListeners() {
         this.canvas.addEventListener('pointerdown', (e) => this.handleMouseDown(e));
         document.addEventListener('pointerup', (e) => this.handleMouseUp(e));

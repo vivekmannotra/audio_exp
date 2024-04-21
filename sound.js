@@ -193,7 +193,7 @@ export class SoundEngine {
                 bayan: [110.00, 116.54]
             }
         };
-        const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0, 0]];
+        const d_def = [[0, 1, 0], [0,0,0], [1100, 0.1, 0.1, 0]];
         const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
         const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.1, 0, 0.9, 0]];
         const t_def = [[0,1,0], [0,0,0], [0.1, 0.1, 0.2, 0]];
@@ -208,8 +208,8 @@ export class SoundEngine {
             const curvedResponse = n => Math.round(Math.exp(-n / (20+n)) * 1000);
             if (type == 'drum') temp_def[2][0] = (parseFloat((temp_def[2][0] - curvedResponse(i))/10000));
             if (type == 'string') temp_def[2][0] = (parseFloat((temp_def[2][0] - curvedResponse(i))/1000));
-            temp_def[2][1] = temp_def[2][1] * Math.pow(decayReduction, i);
-            temp_def[2][2] = temp_def[2][1] * Math.pow(sustainLevelAdjustment, i);
+            //temp_def[2][1] = temp_def[2][1] * Math.pow(decayReduction, i);
+            //temp_def[2][2] = temp_def[2][1] * Math.pow(sustainLevelAdjustment, i);
             return temp_def
         };
 
