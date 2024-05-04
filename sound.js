@@ -197,7 +197,7 @@ export class SoundEngine {
         const s_def = [[0, 1, 0.9, 0.8, 0.7, 0.5, 0.4, 0.3], [0, 0, 0, 0 , 0, 0, 0 ,0], [1100, 0.2, 0.5, 0.1]];
         const p_def = [[0, 1, 0.4, 0.2, 0.1], [0,0.5,0.5, 0.5, 0], [0.1, 0, 0.9, 0]];
         const t_def = [[0,1,0], [0,0,0], [0.1, 0.1, 0.2, 0]];
-        const harmonicalDepth = 2;
+        const harmonicalDepth = 1;
         const stereoChannels = [-1, 1];
         const soundDefinitions = {};
 
@@ -217,7 +217,7 @@ export class SoundEngine {
             let harmonics = [];
             let harmonicDecayFactor = 0.8;
 
-            harmonics.push([frequency].concat(makeDefInstHarmonic(def, type, 0)))
+            harmonics.push([frequency].concat(makeDefInstHarmonic(def, type, index)))
 
             for (let n = 1; n <= harmonicalDepth; n++) {
                 let harmonicFreq = frequency * (n + 1);
@@ -243,12 +243,12 @@ export class SoundEngine {
         const expandIntrumentSound = (baseFrequencies, type, def) => {
             const harmonicSound = baseFrequencies.map((f, i) => {
                     return makeIntrumentHarmonics(f, i, type, def)
-                });
+            });
             const stereoSound = harmonicSound.map(hs => {
                     return stereoChannels.map(st => {
                         return hs.map(hss => hss.concat(st))
-        });
-        });
+                });
+            });
             return stereoSound;
         };
 

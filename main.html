@@ -419,10 +419,12 @@ const cssRule2 = `footer, header { background: ${randomColor};}`;
 
 			let frameCount = audioBuffer.length;
 			let frameCountW = audioBuffer.length;
-			window.SM.drawFrequency(left_fviz, canvasContextL, analyserLeft, dataArrayLeft, frameCount);
-			window.SM.drawFrequency(right_fviz, canvasContextR, analyserRight, dataArrayRight, frameCount);
-			window.SM.drawWaveform(left_wviz, canvasContextWL, analyserLeft, dataArrayWLeft, frameCountW);
-			window.SM.drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
+			if (document.querySelector("#spectra").style.display != 'none') window.SM.drawFrequency(left_fviz, canvasContextL, analyserLeft, dataArrayLeft, frameCount);
+			if (document.querySelector("#spectra").style.display != 'none') window.SM.drawFrequency(right_fviz, canvasContextR, analyserRight, dataArrayRight, frameCount);
+			if (document.querySelector("#wave").style.display != 'none') window.SM.drawWaveform(left_wviz, canvasContextWL, analyserLeft, dataArrayWLeft, frameCountW);
+			if (document.querySelector("#wave").style.display != 'none') window.SM.drawWaveform(right_wviz, canvasContextWR, analyserRight, dataArrayWRight, frameCountW);
+			if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyserLeft, frameCount, -1);
+			if (document.querySelector("#gl_viz").style.display != 'none')	window.gl_viz.startVisualizationLoop(analyserRight, frameCount, 1);
 			updateProgressBar(source, audioFileCtx);
 
 			if (document.querySelector("#analyse_file").checked) {
